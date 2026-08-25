@@ -1,19 +1,34 @@
 from collections import Counter
-from typing import Self
+from typing import Annotated, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import AfterValidator, BaseModel, Field, model_validator
 
 from app.models import AnswerType
 
 
+def _no_control_chars(value: str) -> str:
+    """Reject control characters, which can appear via JSON escape corruption"""
+    bad = sorted({c for c in value if ord(c) < 32 and c != "\n" or ord(c) == 127})
+    if bad:
+        codes = ", ".join(hex(ord(c)) for c in bad)
+        raise ValueError(
+            f"contains control character(s) {codes}. A LaTeX command was written with a "
+            r"single backslash; double it (\\frac, \\sqrt, \\times)."
+        )
+    return value
+
+
+PromptText = Annotated[str, AfterValidator(_no_control_chars)]
+
+
 class GeneratedProblem(BaseModel):
-    title: str = Field(
+    title: PromptText = Field(
         description=(
             "A short title naming what this specific problem asks. It must tell this "
             "problem apart from others on the same topic, so do not just restate the topic."
         )
     )
-    body: str = Field(
+    body: PromptText = Field(
         description=(
             "The situation the student reads before answering anything. Give the context "
             "and every value they need. Do not ask a question here and do not work "
@@ -25,13 +40,13 @@ class GeneratedProblem(BaseModel):
 class GeneratedStep(BaseModel):
     """Reuse step_title and step_body across problem types"""
 
-    step_title: str = Field(
+    step_title: PromptText = Field(
         description=(
             "A 2-5 word label for what this step asks, e.g. 'Radius of the circle'. "
             "Do not add a leading number."
         )
     )
-    step_body: str = Field(
+    step_body: PromptText = Field(
         description=(
             "The question the student answers in this step. Ask for exactly one value or "
             "expression; the student has a single input box. Assume they have read the "
@@ -42,7 +57,7 @@ class GeneratedStep(BaseModel):
 
 
 class GeneratedTextBoxStep(GeneratedStep):
-    step_answer: list[str] = Field(
+    step_answer: list[PromptText] = Field(
         min_length=1,
         description=(
             "Every answer that should be marked correct, as bare values with "
@@ -59,12 +74,12 @@ class GeneratedTextBoxStep(GeneratedStep):
 
 
 class GeneratedMultipleChoiceStep(GeneratedStep):
-    choices: list[str] = Field(
+    choices: list[PromptText] = Field(
         min_length=2,
         description="Generate exactly four different choices. Only ONE can be correct. "
         "The false choices should be plausible and ideally cover common misconceptions",
     )
-    step_answer: str = Field(
+    step_answer: PromptText = Field(
         min_length=1, description="Entry must match a choice EXACTLY, character for character"
     )
 
@@ -89,13 +104,13 @@ class GeneratedMultipleChoiceStep(GeneratedStep):
 
 class GeneratedGridStep(GeneratedStep):
     num_rows: int = Field(
-        description="Set the number of rows for the grid. " \
+        description="Set the number of rows for the grid. "
         "Must be equal to number of entries in rows",
-        ge=1, 
-        le=8
+        ge=1,
+        le=8,
     )
     num_cols: int = Field(description="Set the number of columns for the grid.", ge=1, le=8)
-    rows: list[str] = Field(
+    rows: list[PromptText] = Field(
         description=(
             "Represent rows with | as the delimiter. For example: 1|2|3 represents a row. "
             "Generate exactly as many rows as num_rows, each with exactly num_cols cells "
@@ -117,7 +132,6 @@ class GeneratedGridStep(GeneratedStep):
             cells = row.split("|")
             if len(cells) != self.num_cols:
                 raise ValueError(
-                    f"Row {pos} ({row}) has {len(cells)} columns, "
-                    f"but num_cols is {self.num_cols}"
+                    f"Row {pos} ({row}) has {len(cells)} columns but num_cols is {self.num_cols}"
                 )
         return self

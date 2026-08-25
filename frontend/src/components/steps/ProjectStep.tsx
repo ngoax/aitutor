@@ -15,8 +15,8 @@ export function ProjectStep({ projects, selectedId, onSelect, onCreated, onDelet
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // source_name becomes a directory in the OATutor export, and the backend
-  // enforces ^[A-Za-z0-9_]+$ — so derive a safe slug from the title.
+  // source_name becomes a directory in the OATutor export and the backend
+  // enforces ^[A-Za-z0-9_]+$, so derive a safe slug from the title.
   const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 
   async function create(event: React.FormEvent) {

@@ -23,6 +23,8 @@ def _json_column(default_factory) -> Any:
 
 
 class Project(SQLModel, table=True):
+    __table_args__ = {"sqlite_autoincrement": True}
+
     id: int | None = Field(default=None, primary_key=True)
     name: str
     # Becomes the OATutor `content-sources/<source_name>` directory on export.
@@ -73,7 +75,6 @@ class Problem(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")
     lesson_plan_id: int | None = Field(default=None, foreign_key="lessonplan.id")
-    # The OATutor problem id, e.g. "circle1" — becomes the content-pool folder name.
     oatutor_id: str
     title: str
     body: str = ""
@@ -83,7 +84,7 @@ class Problem(SQLModel, table=True):
     topic: str | None = None
     difficulty: str | None = None
     status: DraftStatus = DraftStatus.DRAFT
-    # Chunk ids that grounded this generation, for provenance display.
+    # Chunk ids that grounded this generation for display of sources
     source_chunk_ids: list[str] = _json_column(list)
     created_at: datetime = Field(default_factory=_now)
 
@@ -102,8 +103,6 @@ class Step(SQLModel, table=True):
     answer_type: AnswerType = AnswerType.STRING
     step_title: str = ""
     step_body: str = ""
-    # Held in its natural shape (list of strings, or list-of-lists for Grid/Matrix);
-    # only serialized to OATutor's string form at export time.
     step_answer: Any = _json_column(list)
     answer_validator: AnswerValidator = AnswerValidator.DEFAULT
     choices: list[str] | None = Field(default=None, sa_column=Column(JSON))
@@ -119,7 +118,6 @@ class Step(SQLModel, table=True):
 class HintEntry(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     step_id: int = Field(foreign_key="step.id", ondelete="CASCADE")
-    # MVP always writes a single "Default" pathway; A/B pathways come later.
     pathway_name: str = "Default"
     order_index: int = 0
     oatutor_id: str
@@ -137,7 +135,7 @@ class HintEntry(SQLModel, table=True):
 
 
 class SkillDefault(SQLModel, table=True):
-    """BKT parameters per skill. Teacher-tunable — not an LLM generation target."""
+    """BKT parameters per skill."""
 
     id: int | None = Field(default=None, primary_key=True)
     project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")

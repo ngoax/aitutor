@@ -9,7 +9,7 @@ type Props = {
   placeholder?: string;
 };
 
-/** Custom listbox — replaces the native <select> so options can show a description. */
+/** Replaces the native <select> so each option can show a description. */
 export function Select({ label, value, options, onChange, placeholder = "Choose…" }: Props) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);

@@ -54,7 +54,7 @@ def list_providers() -> list[ProviderInfo]:
                 provider=provider,
                 available=available,
                 default_model=config.resolved_model(),
-                supports_tool_calling=config.resolved_tool_calling(),
+                structured_method=config.resolved_structured_method(),
                 detail=detail,
             )
         )

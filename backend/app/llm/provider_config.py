@@ -10,17 +10,19 @@ CHAT_PROVIDERS: tuple[ChatProvider, ...] = get_args(ChatProvider)
 DEFAULT_PROVIDER: ChatProvider = "ollama"
 
 DEFAULT_MODELS: dict[str, str] = {
-    "openai": "gpt-5",
+    "openai": "gpt-5.4-mini",
     "anthropic": "claude-sonnet-5",
-    "ollama": "gemma4:e2b-mlx",
+    "ollama": "gemma4:e2b",
 }
 
-DEFAULT_SUPPORTS_TOOL_CALLING: dict[str, bool] = {
-    "openai": True,
-    "anthropic": True,
-    # Ollama tool calling works only via method="function_calling"
-    # (default json_schema path fails to parse on small models)
-    "ollama": True,
+StructuredMethod = Literal["json_schema", "function_calling", "json_mode"]
+
+DEFAULT_STRUCTURED_METHOD: dict[str, StructuredMethod] = {
+    "openai": "json_schema",
+    "anthropic": "json_schema",
+    "ollama": "json_schema",
+    # MLX on Apple Silicon silently drops native structured outputs
+    # works only via method="function_calling"
 }
 
 
@@ -30,12 +32,10 @@ class ProviderConfig(BaseModel):
     provider: ChatProvider = DEFAULT_PROVIDER
     model: str | None = None
     temperature: float = Field(default=0.0, ge=0.0, le=2.0)
-    supports_tool_calling: bool | None = None
+    structured_method: StructuredMethod | None = None
 
     def resolved_model(self) -> str:
         return self.model or DEFAULT_MODELS[self.provider]
 
-    def resolved_tool_calling(self) -> bool:
-        if self.supports_tool_calling is not None:
-            return self.supports_tool_calling
-        return DEFAULT_SUPPORTS_TOOL_CALLING[self.provider]
+    def resolved_structured_method(self) -> StructuredMethod:
+        return self.structured_method or DEFAULT_STRUCTURED_METHOD[self.provider]

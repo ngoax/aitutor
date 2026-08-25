@@ -53,9 +53,8 @@ export default function App() {
   const handleProjectDeleted = useCallback(
     (deletedId: number) => {
       loadProjects();
-      // If the deleted project was the active one, drop the state that belonged
-      // to it and return to the first step — otherwise the walkthrough would
-      // carry on against a project that no longer exists.
+      // If the deleted project was the active one, reset to the first step.
+      // Otherwise the walkthrough carries on against a project that is gone.
       if (deletedId === selectedId) {
         setSelectedId(null);
         setDocuments([]);
@@ -73,7 +72,7 @@ export default function App() {
 
   useEffect(loadDocuments, [loadDocuments]);
 
-  // Ingestion is a background job — poll until nothing is pending.
+  // Ingestion runs in the background, so poll until nothing is pending.
   useEffect(() => {
     if (!documents.some((doc) => doc.status === "pending")) return;
     const timer = setInterval(loadDocuments, 2000);

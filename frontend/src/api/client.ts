@@ -15,7 +15,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!response.ok) {
-    // FastAPI puts the reason in `detail` — surface it instead of a bare status code.
+    // FastAPI puts the reason in `detail`, which beats a bare status code.
     let detail = `${response.status} ${response.statusText}`;
     try {
       const body = await response.json();

@@ -43,7 +43,7 @@ export type ProviderInfo = {
   provider: string;
   available: boolean;
   default_model: string;
-  supports_tool_calling: boolean;
+  structured_method: string;
   detail: string | null;
 };
 
