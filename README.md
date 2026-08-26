@@ -1,17 +1,16 @@
 # aitutor
+**NOTE**: This repo is currently in active development.
 
-A unified authoring interface for generating [OATutor](https://github.com/CAHLR/OATutor) tutoring
-content from course materials. Teachers upload their materials, a RAG-grounded LLM suggests task
-formats and drafts problems, the teacher edits everything freely, and the tool exports valid
-OATutor `content-pool` JSON.
+A unified authoring interface for generating [OATutor](https://github.com/CAHLR/OATutor) tutoring content from course materials. Teachers upload their materials, a RAG-grounded LLM suggests task formats, drafts problems and adds hints, while teachers retain the ability to edit everything freely, and the tool exports valid OATutor `content-pool` JSON.
 
-Research project — ETH Zurich, Learning and Instruction Lab.
+
+This project is part of a research project @ ETH Zurich, Learning and Instruction Lab.
 
 ## Stack
 
 - **Backend**: Python / FastAPI / SQLModel (SQLite) / LangChain / ChromaDB
 - **Frontend**: React + TypeScript (Vite)
-- **LLMs**: multi-provider via LangChain — OpenAI, Anthropic, and local models via Ollama
+- **LLMs**: multi-provider support via LangChain: OpenAI, Anthropic, and local models via Ollama
 
 ## Running locally
 
