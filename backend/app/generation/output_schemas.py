@@ -55,6 +55,10 @@ class GeneratedStep(BaseModel):
         )
     )
 
+    def answer_text(self) -> str:
+        """Force subclasses to implement function to print prompt-friendly formats"""
+        raise NotImplementedError
+
 
 class GeneratedTextBoxStep(GeneratedStep):
     step_answer: list[PromptText] = Field(
@@ -71,6 +75,9 @@ class GeneratedTextBoxStep(GeneratedStep):
             "should be accepted, 'string' for exact text."
         )
     )
+
+    def answer_text(self) -> str:
+        return " or ".join(self.step_answer)
 
 
 class GeneratedMultipleChoiceStep(GeneratedStep):
@@ -101,6 +108,9 @@ class GeneratedMultipleChoiceStep(GeneratedStep):
             )
         return self
 
+    def answer_text(self) -> str:
+        return self.step_answer
+
 
 class GeneratedGridStep(GeneratedStep):
     num_rows: int = Field(
@@ -117,6 +127,9 @@ class GeneratedGridStep(GeneratedStep):
             "separated by |."
         )
     )
+
+    def answer_text(self) -> str:
+        return "\n".join(self.rows)
 
     @model_validator(mode="after")
     def rows_match_num_rows(self) -> Self:
