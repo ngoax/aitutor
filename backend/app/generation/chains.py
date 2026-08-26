@@ -7,12 +7,14 @@ from pydantic import BaseModel, ValidationError
 
 from app.generation.output_schemas import (
     GeneratedGridStep,
+    GeneratedHintPathway,
     GeneratedMultipleChoiceStep,
     GeneratedProblem,
     GeneratedStep,
     GeneratedTextBoxStep,
 )
 from app.generation.prompts import (
+    HINT_PROMPT,
     PROBLEM_PROMPT,
     RETRY_HUMAN,
     STEP_PROMPT,
@@ -62,6 +64,30 @@ def generate_problem(
         PROBLEM_PROMPT,
         {"topic": topic, "difficulty": difficulty, "context": format_context(docs)},
         GeneratedProblem,
+        config,
+    )
+
+
+def generate_hints(
+    step: GeneratedStep,
+    previous_steps: list[GeneratedStep],
+    problem: GeneratedProblem,
+    num_hints: int,
+    docs: list[Document],
+    config: ProviderConfig | None = None,
+) -> GeneratedHintPathway:
+    return _generate(
+        HINT_PROMPT,
+        {
+            "context": format_context(docs),
+            "problem_title": problem.title,
+            "problem_body": problem.body,
+            "step_body": step.step_body,
+            "step_answer": step.answer_text(),
+            "num_hints": num_hints,
+            "previous_steps": format_steps(previous_steps),
+        },
+        GeneratedHintPathway,
         config,
     )
 
