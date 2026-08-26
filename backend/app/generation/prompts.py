@@ -19,7 +19,7 @@ def format_context(docs: list[Document]) -> str:
 
 
 def format_steps(steps: list[GeneratedStep]) -> str:
-    """Gives the LLM context about the previous steps"""
+    """Gives the LLM formatted context about the previous steps"""
     if not steps:
         return "No steps written yet."
     context: list[str] = []
@@ -39,7 +39,6 @@ SYSTEM = (
     "The course material was extracted from PDF and has lost superscript formatting. "
     "A digit directly after a variable is an exponent: read ax2+bx+c as ax² + bx + c, "
     "and 3x2y as 3x²y. Never reproduce the flattened form in what you write.\n\n"
-    "Write for a student meeting this material for the first time, not for an expert. "
     "Write for a student meeting this material for the first time, not for an expert. "
     "Write mathematics as LaTeX. Your answer is JSON, so every backslash must be doubled: "
     r"write \\frac, \\sqrt, \\times, \\theta. A single backslash corrupts the output. "
