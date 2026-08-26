@@ -76,7 +76,12 @@ STEP_HUMAN = (
     "closer to the solution and must not repeat what an earlier step already established."
 )
 
-STEP_PROMPT = ChatPromptTemplate.from_messages([("system", SYSTEM), ("human", STEP_HUMAN)])
+STEP_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", SYSTEM),
+        ("human", STEP_HUMAN),
+    ]
+)
 
 
 RETRY_HUMAN = (
@@ -84,4 +89,31 @@ RETRY_HUMAN = (
     "{errors}\n\n"
     "Return a corrected version of the whole answer. Fix only what is listed above and keep "
     "everything else unchanged. Do not explain the correction."
+)
+
+
+HINT_HUMAN = (
+    "Course material:\n"
+    "{context}\n\n"
+    "---\n\n"
+    "Problem: {problem_title}\n"
+    "{problem_body}\n\n"
+    "The question being hinted:\n"
+    "{step_body}\n\n"
+    "The correct answer: "
+    "{step_answer}\n\n"
+    "Steps already written:\n"
+    "{previous_steps}\n\n"
+    "---\n\n"
+    "Write exactly {num_hints} hints for the question above. The student has already "
+    "worked through the earlier steps, so do not spend a hint re-deriving something "
+    "they have established. Do NOT give the answer before the final hint. Only the final "
+    "hint can state the answer."
+)
+
+HINT_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", SYSTEM),
+        ("human", HINT_HUMAN),
+    ]
 )
