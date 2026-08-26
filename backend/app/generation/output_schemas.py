@@ -148,3 +148,31 @@ class GeneratedGridStep(GeneratedStep):
                     f"Row {pos} ({row}) has {len(cells)} columns but num_cols is {self.num_cols}"
                 )
         return self
+
+
+class GeneratedHint(BaseModel):
+    title: PromptText = Field(
+        description=(
+            "A 2-5 word label for what this hint addresses, e.g. 'Which numbers multiply "
+            "to 24'. Do not add a leading number."
+        )
+    )
+    text: PromptText = Field(
+        description=(
+            "What the student reads when they open this hint. Address them directly and "
+            "keep it to one or two sentences."
+        )
+    )
+
+
+class GeneratedHintPathway(BaseModel):
+    hints: list[GeneratedHint] = Field(
+        min_length=1,
+        description=(
+            "An ordered sequence a stuck student works through, each one revealing more "
+            "than the last. The first points at the idea this step depends on without doing "
+            "any of the work. Middle hints narrow it down one move at a time. The final hint "
+            "states the answer and explains why it follows. Never repeat what an earlier "
+            "hint already gave away."
+        ),
+    )
