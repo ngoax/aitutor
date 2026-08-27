@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import (
+    drafts,
     generation,
     health,
     problems,
@@ -42,6 +43,7 @@ def create_app() -> FastAPI:
     app.include_router(retrieval.router, prefix="/api")
     app.include_router(providers.router, prefix="/api")
     app.include_router(generation.router, prefix="/api")
+    app.include_router(drafts.router, prefix="/api")
     return app
 
 
