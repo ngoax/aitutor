@@ -22,5 +22,15 @@ def generate(project_id: int, payload: GenerationRequest, session: SessionDep) -
     if project.chat_provider:
         config = ProviderConfig(provider=project.chat_provider, model=project.chat_model)
 
-    draft = generate_draft(payload, project_id=project_id, config=config)
+    try:
+        draft = generate_draft(payload, project_id=project_id, config=config)
+    except Exception as exc:
+        # Anything raised here is the model provider's failure rather than the
+        # caller's: retries exhausted, a rate limit, an unreachable endpoint. A
+        # 500 with a traceback tells the teacher nothing they can act on.
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+
     return persist_draft(session, project_id, payload, draft)

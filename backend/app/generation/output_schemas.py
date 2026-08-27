@@ -1,3 +1,4 @@
+import json
 from collections import Counter
 from typing import Annotated, Self
 
@@ -18,7 +19,28 @@ def _no_control_chars(value: str) -> str:
     return value
 
 
-PromptText = Annotated[str, AfterValidator(_no_control_chars)]
+def _not_serialised_json(value: str) -> str:
+    """Reject a field whose whole value is a JSON object.
+
+    Weaker models sometimes answer by serialising an object into a single field
+    instead of filling the schema, which passes str validation and lands a blob
+    of JSON in front of the teacher.
+    """
+    stripped = value.strip()
+    if stripped.startswith("{") and stripped.endswith("}"):
+        try:
+            parsed = json.loads(stripped)
+        except ValueError:
+            return value
+        if isinstance(parsed, dict):
+            raise ValueError(
+                "contains a serialised JSON object instead of text. Fill each schema "
+                "field separately rather than nesting an object inside one of them."
+            )
+    return value
+
+
+PromptText = Annotated[str, AfterValidator(_no_control_chars), AfterValidator(_not_serialised_json)]
 
 
 class GeneratedProblem(BaseModel):
@@ -43,15 +65,17 @@ class GeneratedStep(BaseModel):
     step_title: PromptText = Field(
         description=(
             "A 2-5 word label for what this step asks, e.g. 'Radius of the circle'. "
-            "Do not add a leading number."
+            "Name the content only. Never refer to the step's position: no 'Step 2', "
+            "no 'of 3', no leading number."
         )
     )
     step_body: PromptText = Field(
         description=(
             "The question the student answers in this step. Ask for exactly one value or "
             "expression; the student has a single input box. Assume they have read the "
-            "problem body; do not restate the scenario. Do not reveal the answer or the "
-            "method for reaching it."
+            "problem body; do not restate the scenario. State only the question: do not "
+            "work through it, do not show intermediate results, and do not give the answer. "
+            "The student has not solved it yet."
         )
     )
 
@@ -64,8 +88,9 @@ class GeneratedTextBoxStep(GeneratedStep):
     step_answer: list[PromptText] = Field(
         min_length=1,
         description=(
-            "Every answer that should be marked correct, as bare values with "
-            "no explanation. Include equivalent forms a student might reasonably type, "
+            "Every answer that should be marked correct, as bare values with no "
+            "explanation. Each entry is a value the student types, never an instruction "
+            "for finding it. Include equivalent forms a student might reasonably type, "
             "such as '0.5' and '1/2'."
         ),
     )

@@ -1,4 +1,5 @@
 import type { GenerationRequest, ProblemDraft, StepDraft } from "../../api/types";
+import { MathText } from "../MathText";
 
 type Props = {
   request: GenerationRequest;
@@ -59,7 +60,7 @@ export function GenerateStep({ request, draft, busy, error, onGenerate }: Props)
             <h3>{draft.title}</h3>
             <code className="draft-id">{draft.oatutor_id}</code>
           </header>
-          <p className="draft-body">{draft.body}</p>
+          <MathText className="draft-body">{draft.body}</MathText>
 
           {draft.steps.map((step, index) => (
             <section key={step.id} className="draft-step">
@@ -67,19 +68,23 @@ export function GenerateStep({ request, draft, busy, error, onGenerate }: Props)
                 <span className="step-num">{index + 1}</span>
                 {step.step_title}
               </h4>
-              <p>{step.step_body}</p>
+              <p>
+                <MathText>{step.step_body}</MathText>
+              </p>
 
               {step.choices && (
                 <ul className="draft-choices">
                   {step.choices.map((choice) => (
-                    <li key={choice}>{choice}</li>
+                    <li key={choice}>
+                      <MathText>{choice}</MathText>
+                    </li>
                   ))}
                 </ul>
               )}
 
               <p className="draft-answer">
                 <span className="chips">{step.answer_type}</span>
-                {answerText(step)}
+                <MathText>{answerText(step)}</MathText>
               </p>
 
               {step.hints.length > 0 && (
@@ -87,7 +92,7 @@ export function GenerateStep({ request, draft, busy, error, onGenerate }: Props)
                   {step.hints.map((hint) => (
                     <li key={hint.id} className={`hint hint-${hint.type}`}>
                       <span className="hint-title">{hint.title}</span>
-                      <span className="hint-text">{hint.text}</span>
+                      <MathText className="hint-text">{hint.text}</MathText>
                     </li>
                   ))}
                 </ol>

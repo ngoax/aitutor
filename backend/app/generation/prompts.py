@@ -40,8 +40,9 @@ SYSTEM = (
     "A digit directly after a variable is an exponent: read ax2+bx+c as ax² + bx + c, "
     "and 3x2y as 3x²y. Never reproduce the flattened form in what you write.\n\n"
     "Write for a student meeting this material for the first time, not for an expert. "
-    "Write mathematics as LaTeX. Your answer is JSON, so every backslash must be doubled: "
-    r"write \\frac, \\sqrt, \\times, \\theta. A single backslash corrupts the output. "
+    "Write mathematics as LaTeX. The answer is JSON, so backslashes must be escaped: "
+    r"write \\frac so that it decodes to \frac. The text a student finally reads must "
+    "contain single backslashes, never double ones. "
     "Match the language of the course material.\n\n"
     "Difficulty describes how much work the problem takes, not how obscure it is."
 )

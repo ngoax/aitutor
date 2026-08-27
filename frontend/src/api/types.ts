@@ -95,3 +95,10 @@ export type ProblemDraft = {
   created_at: string;
   steps: StepDraft[];
 };
+
+export type RetrievedChunk = {
+  text: string;
+  citation_page: number | null;
+  source_document_id: number | null;
+  chunk_index: number | null;
+};

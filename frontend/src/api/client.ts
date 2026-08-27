@@ -3,6 +3,7 @@ import type {
   ProblemDraft,
   Project,
   ProviderInfo,
+  RetrievedChunk,
   SourceDocument,
   WizardOptions,
 } from "./types";
