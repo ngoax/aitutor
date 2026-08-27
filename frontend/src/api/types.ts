@@ -51,9 +51,47 @@ export type ProviderInfo = {
   detail: string | null;
 };
 
-export type RetrievedChunk = {
+export type HintType = "hint" | "scaffold" | "solution";
+
+export type HintEntry = {
+  id: number;
+  order_index: number;
+  oatutor_id: string;
+  type: HintType;
+  title: string;
   text: string;
-  citation_page: number | null;
-  source_document_id: number | null;
-  chunk_index: number | null;
+  dependencies: number[];
+};
+
+export type StepDraft = {
+  id: number;
+  problem_id: number;
+  oatutor_id: string;
+  order_index: number;
+  problem_type: string;
+  answer_type: string;
+  step_title: string;
+  step_body: string;
+  step_answer: string[] | string[][];
+  answer_validator: string;
+  choices: string[] | null;
+  num_rows: number | null;
+  num_cols: number | null;
+  skills: string[];
+  hints: HintEntry[];
+};
+
+export type ProblemDraft = {
+  id: number;
+  project_id: number;
+  oatutor_id: string;
+  title: string;
+  body: string;
+  course_name: string;
+  oer: string | null;
+  topic: string | null;
+  difficulty: string | null;
+  status: string;
+  created_at: string;
+  steps: StepDraft[];
 };

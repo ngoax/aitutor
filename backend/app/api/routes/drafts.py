@@ -5,13 +5,13 @@ from app.generation.persist import persist_draft
 from app.generation.pipeline import generate_draft
 from app.llm.provider_config import ProviderConfig
 from app.models import Problem, Project
+from app.schemas.draft import ProblemDraftRead
 from app.schemas.generation import GenerationRequest
-from app.schemas.problem import ProblemRead
 
 router = APIRouter(prefix="/projects/{project_id}/generate", tags=["generation"])
 
 
-@router.post("", response_model=ProblemRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ProblemDraftRead, status_code=status.HTTP_201_CREATED)
 def generate(project_id: int, payload: GenerationRequest, session: SessionDep) -> Problem:
     """Generate one problem with its steps and hints, and store it as a draft."""
     project = session.get(Project, project_id)

@@ -14,6 +14,7 @@ class ProjectCreate(BaseModel):
 
 class ProjectUpdate(BaseModel):
     """Partial update with source_name excluded since changing it would oprhan anything written"""
+
     name: str | None = Field(default=None, min_length=1, max_length=200)
     chat_provider: ChatProvider | None = None
     chat_model: str | None = None

@@ -4,19 +4,19 @@ import type {
   GenerationRequest,
   Project,
   ProviderInfo,
-  RetrievedChunk,
+  ProblemDraft,
   SourceDocument,
   WizardOptions,
 } from "./api/types";
 import ethLogoBlack from "./assets/ethz_logo_black.svg";
 import { Stepper } from "./components/Stepper";
 import { ConfigureStep } from "./components/steps/ConfigureStep";
+import { GenerateStep } from "./components/steps/GenerateStep";
 import { MaterialsStep } from "./components/steps/MaterialsStep";
-import { PreviewStep } from "./components/steps/PreviewStep";
 import { ProjectStep } from "./components/steps/ProjectStep";
 import "./App.css";
 
-const STEPS = ["Project", "Materials", "Configure", "Review"];
+const STEPS = ["Project", "Materials", "Configure", "Generate"];
 
 const INITIAL_REQUEST: GenerationRequest = {
   topic: "",
@@ -36,7 +36,7 @@ export default function App() {
   const [options, setOptions] = useState<WizardOptions | null>(null);
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [request, setRequest] = useState<GenerationRequest>(INITIAL_REQUEST);
-  const [chunks, setChunks] = useState<RetrievedChunk[] | null>(null);
+  const [draft, setDraft] = useState<ProblemDraft | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
@@ -83,13 +83,12 @@ export default function App() {
     setRequest((previous) => ({ ...previous, [key]: value }));
   }
 
-  async function runPreview() {
+  async function runGenerate() {
     if (selectedId === null) return;
     setBusy(true);
     setError(null);
-    setChunks(null);
     try {
-      setChunks(await api.testRetrieval(selectedId, { topic: request.topic, k: request.k }));
+      setDraft(await api.generateDraft(selectedId, request));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -161,12 +160,12 @@ export default function App() {
             />
           )}
           {step === 3 && (
-            <PreviewStep
+            <GenerateStep
               request={request}
-              chunks={chunks}
+              draft={draft}
               busy={busy}
               error={error}
-              onRun={runPreview}
+              onGenerate={runGenerate}
             />
           )}
 

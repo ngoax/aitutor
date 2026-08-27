@@ -1,8 +1,8 @@
 import type {
   GenerationRequest,
+  ProblemDraft,
   Project,
   ProviderInfo,
-  RetrievedChunk,
   SourceDocument,
   WizardOptions,
 } from "./types";
@@ -15,7 +15,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!response.ok) {
-    // FastAPI puts the reason in `detail`, which beats a bare status code.
     let detail = `${response.status} ${response.statusText}`;
     try {
       const body = await response.json();
@@ -56,6 +55,12 @@ export const api = {
       headers: {},
     });
   },
+
+  generateDraft: (projectId: number, payload: GenerationRequest) =>
+    request<ProblemDraft>(`/projects/${projectId}/generate`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 
   wizardOptions: () => request<WizardOptions>("/generation/options"),
   listProviders: () => request<ProviderInfo[]>("/providers"),
