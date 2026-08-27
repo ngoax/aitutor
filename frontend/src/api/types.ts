@@ -2,6 +2,10 @@ export type Project = {
   id: number;
   name: string;
   source_name: string;
+  chat_provider: string | null;
+  chat_model: string | null;
+  embedding_provider: string | null;
+  embedding_model: string | null;
   created_at: string;
 };
 

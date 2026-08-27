@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.core.db import SessionDep
 from app.models import Project
 from app.rag.vectorstore import delete_project_index
-from app.schemas.project import ProjectCreate, ProjectRead
+from app.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -31,6 +31,20 @@ def get_project(project_id: int, session: SessionDep) -> Project:
     project = session.get(Project, project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+
+@router.patch("/{project_id}", response_model=ProjectRead)
+def update_project(project_id: int, payload: ProjectUpdate, session: SessionDep) -> Project:
+    project = session.get(Project, project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    # exclude_unset keeps an omitted field untouched, so an explicit null still clears one.
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(project, field, value)
+    session.add(project)
+    session.commit()
+    session.refresh(project)
     return project
 
 
