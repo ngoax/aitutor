@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
     ollama_base_url: str = "http://localhost:11434"
+    nvidia_api_key: str | None = None
+    nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
 
     @property
     def uploads_dir(self) -> Path:

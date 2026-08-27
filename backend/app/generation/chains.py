@@ -21,6 +21,7 @@ from app.generation.prompts import (
     format_context,
     format_steps,
 )
+from app.llm.errors import is_transient
 from app.llm.factory import get_chat_model
 from app.llm.provider_config import ProviderConfig
 from app.models import ProblemType
@@ -36,23 +37,32 @@ def _generate(
     attempts: int = 3,
 ) -> T:
     config = config or ProviderConfig()
-    model = get_chat_model(config).with_structured_output(
-        schema, method=config.resolved_structured_method()
-    )
+    chat_model = get_chat_model(config)
+    method = config.resolved_structured_method()
+    if method is None:
+        model = chat_model.with_structured_output(schema)
+    else:
+        model = chat_model.with_structured_output(schema, method=method)
     messages = prompt.invoke(variables).to_messages()
 
     last_error: str | None = None
     for _ in range(attempts):
         try:
             result = model.invoke(messages)
-            if isinstance(result, schema):
-                return result
-            last_error = f"expected {schema.__name__}, got {result!r}"
         except ValidationError as exc:
             last_error = "; ".join(
                 f"{'.'.join(str(loc) for loc in e['loc']) or schema.__name__}: {e['msg']}"
                 for e in exc.errors()
             )
+        except Exception as exc:
+            if not is_transient(exc):
+                raise
+            last_error = f"{type(exc).__name__} from the provider"
+            continue
+        else:
+            if isinstance(result, schema):
+                return result
+            last_error = f"expected {schema.__name__}, got {result!r}"
         messages.append(HumanMessage(content=RETRY_HUMAN.format(errors=last_error)))
     raise ValueError(f"Generation failed after {attempts} attempts: {last_error}")
 

@@ -2,7 +2,12 @@ import httpx
 from fastapi import APIRouter
 
 from app.core.config import settings
-from app.llm.provider_config import CHAT_PROVIDERS, ChatProvider, ProviderConfig
+from app.llm.provider_config import (
+    CHAT_PROVIDERS,
+    DEFAULT_MODELS,
+    ChatProvider,
+    ProviderConfig,
+)
 from app.schemas.provider import ProviderInfo
 
 router = APIRouter(prefix="/providers", tags=["providers"])
@@ -28,6 +33,11 @@ def _availability(provider: ChatProvider) -> tuple[bool, str | None]:
         if settings.anthropic_api_key is None:
             return False, "No ANTHROPIC_API_KEY set in backend/.env"
         return True, None
+
+    if provider == "nvidia":
+        if settings.nvidia_api_key is None:
+            return False, "No NVIDIA_API_KEY set in backend/.env"
+        return True, f"Key set, using {DEFAULT_MODELS['nvidia']} (not verified until generation)"
 
     if provider == "ollama":
         models = _ollama_models()
