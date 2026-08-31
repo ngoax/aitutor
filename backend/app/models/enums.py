@@ -34,6 +34,8 @@ class IngestionStatus(StrEnum):
 
 
 class DraftStatus(StrEnum):
+    GENERATING = "generating"
+    FAILED = "failed"
     DRAFT = "draft"
     EDITED = "edited"
     EXPORT_READY = "export_ready"

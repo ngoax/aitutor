@@ -57,11 +57,13 @@ export const api = {
     });
   },
 
-  generateDraft: (projectId: number, payload: GenerationRequest) =>
-    request<ProblemDraft>(`/projects/${projectId}/generate`, {
+  startDraft: (projectId: number, payload: GenerationRequest) =>
+    request<ProblemDraft>(`/projects/${projectId}/drafts`, {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  getDraft: (projectId: number, problemId: number) =>
+    request<ProblemDraft>(`/projects/${projectId}/drafts/${problemId}`),
 
   wizardOptions: () => request<WizardOptions>("/generation/options"),
   listProviders: () => request<ProviderInfo[]>("/providers"),

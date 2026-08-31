@@ -18,6 +18,9 @@ function answerText(step: StepDraft): string {
 }
 
 export function GenerateStep({ request, draft, busy, error, onGenerate }: Props) {
+  const generating = draft?.status === "generating";
+  const ready = draft !== null && !generating && draft.status !== "failed";
+
   return (
     <div className="step-body">
       <h2>Generate</h2>
@@ -47,14 +50,25 @@ export function GenerateStep({ request, draft, busy, error, onGenerate }: Props)
         </div>
       </div>
 
-      <button className="btn btn-primary btn-lg" onClick={onGenerate} disabled={busy}>
-        {busy ? "Generating…" : draft ? "Generate another" : "Generate problem"}
+      <button
+        className="btn btn-primary btn-lg"
+        onClick={onGenerate}
+        disabled={busy || generating}
+      >
+        {busy || generating ? "Generating…" : draft ? "Generate another" : "Generate problem"}
       </button>
-      {busy && <p className="field-hint">A hosted model takes a few seconds, a local one minutes.</p>}
+
+      {generating && (
+        <p className="field-hint">
+          <span className="spinner" /> Working. A hosted model takes seconds, a self-hosted one
+          can take minutes. You can leave this page and come back.
+        </p>
+      )}
 
       {error && <p className="error">{error}</p>}
+      {draft?.status === "failed" && <p className="error">{draft.error}</p>}
 
-      {draft && (
+      {ready && (
         <article className="draft">
           <header className="draft-head">
             <h3>{draft.title}</h3>

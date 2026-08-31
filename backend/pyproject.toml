@@ -19,6 +19,7 @@ dependencies = [
     "langchain-anthropic>=1.5.6",
     "langchain-ollama>=1.1.0",
     "langchain-nvidia-ai-endpoints>=1.4.3",
+    "alembic>=1.19.1",
 ]
 
 [dependency-groups]
@@ -30,6 +31,9 @@ dev = [
 
 [tool.ruff]
 line-length = 100
+# Alembic writes these; column definitions exceed the line length and the
+# template is regenerated on every revision.
+exclude = ["migrations"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

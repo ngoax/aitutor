@@ -17,7 +17,15 @@ from app.generation.output_schemas import (
     GeneratedTextBoxStep,
 )
 from app.generation.pipeline import GeneratedDraft
-from app.models import AnswerType, HintEntry, HintType, Problem, ProblemType, Step
+from app.models import (
+    AnswerType,
+    DraftStatus,
+    HintEntry,
+    HintType,
+    Problem,
+    ProblemType,
+    Step,
+)
 from app.schemas.generation import GenerationRequest
 
 MAX_SLUG_LENGTH = 40
@@ -75,18 +83,19 @@ def step_columns(generated: GeneratedStep, problem_type: ProblemType) -> dict:
 
 def persist_draft(
     session: Session,
-    project_id: int,
+    problem: Problem,
     request: GenerationRequest,
     draft: GeneratedDraft,
 ) -> Problem:
-    problem = Problem(
-        project_id=project_id,
-        oatutor_id=unique_problem_id(session, project_id, slugify(draft.problem.title)),
-        title=draft.problem.title,
-        body=draft.problem.body,
-        topic=request.topic,
-        difficulty=request.difficulty,
-    )
+    """Fill a placeholder Problem row with the generated draft.
+
+    The row already exists because generation runs in the background: it is
+    created up front so the client has something to poll.
+    """
+    problem.title = draft.problem.title
+    problem.body = draft.problem.body
+    problem.status = DraftStatus.DRAFT
+    problem.error = None
     session.add(problem)
     session.flush()
 

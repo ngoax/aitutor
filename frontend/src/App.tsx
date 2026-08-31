@@ -72,6 +72,18 @@ export default function App() {
 
   useEffect(loadDocuments, [loadDocuments]);
 
+  // Generation runs in the background too, so poll until it settles.
+  useEffect(() => {
+    if (selectedId === null || draft?.status !== "generating") return;
+    const timer = setInterval(() => {
+      api
+        .getDraft(selectedId, draft.id)
+        .then(setDraft)
+        .catch((e: Error) => setError(e.message));
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [draft, selectedId]);
+
   // Ingestion runs in the background, so poll until nothing is pending.
   useEffect(() => {
     if (!documents.some((doc) => doc.status === "pending")) return;
@@ -87,8 +99,9 @@ export default function App() {
     if (selectedId === null) return;
     setBusy(true);
     setError(null);
+    setDraft(null);
     try {
-      setDraft(await api.generateDraft(selectedId, request));
+      setDraft(await api.startDraft(selectedId, request));
     } catch (e) {
       setError((e as Error).message);
     } finally {

@@ -84,6 +84,8 @@ class Problem(SQLModel, table=True):
     topic: str | None = None
     difficulty: str | None = None
     status: DraftStatus = DraftStatus.DRAFT
+    # Why generation failed, shown to the teacher. Cleared on a successful run.
+    error: str | None = None
     # Chunk ids that grounded this generation for display of sources
     source_chunk_ids: list[str] = _json_column(list)
     created_at: datetime = Field(default_factory=_now)

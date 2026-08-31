@@ -51,6 +51,8 @@ export type ProviderInfo = {
   detail: string | null;
 };
 
+export type DraftStatus = "generating" | "failed" | "draft" | "edited" | "export_ready";
+
 export type HintType = "hint" | "scaffold" | "solution";
 
 export type HintEntry = {
@@ -91,7 +93,8 @@ export type ProblemDraft = {
   oer: string | null;
   topic: string | null;
   difficulty: string | null;
-  status: string;
+  status: DraftStatus;
+  error: string | null;
   created_at: string;
   steps: StepDraft[];
 };

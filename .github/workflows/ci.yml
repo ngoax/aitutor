@@ -21,6 +21,15 @@ jobs:
       - run: uv run ruff format --check .
       # Integration tests are deselected by pyproject's addopts: no model server here.
       - run: uv run pytest
+      # Builds the schema from the migrations, then fails if the models have
+      # drifted from it. Catches a model change committed without a revision.
+      - name: Migrations match models
+        run: |
+          mkdir -p "$DATA_DIR"
+          PYTHONPATH=. uv run alembic upgrade head
+          PYTHONPATH=. uv run alembic check
+        env:
+          DATA_DIR: ${{ runner.temp }}/ci-data
 
   frontend:
     runs-on: ubuntu-latest

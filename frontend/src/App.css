@@ -891,3 +891,7 @@ body {
   overflow-x: auto;
   overflow-y: hidden;
 }
+.field-hint .spinner {
+  margin-right: 0.4rem;
+  vertical-align: -1px;
+}
