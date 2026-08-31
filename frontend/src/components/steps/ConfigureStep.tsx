@@ -1,4 +1,13 @@
-import type { ChoiceOption, GenerationRequest, SourceDocument, WizardOptions } from "../../api/types";
+import type {
+  ChoiceOption,
+  GenerationRequest,
+  Project,
+  ProjectUpdate,
+  ProviderInfo,
+  SourceDocument,
+  WizardOptions,
+} from "../../api/types";
+import { ModelPicker } from "../ModelPicker";
 import { NumberStepper } from "../NumberStepper";
 import { Select } from "../Select";
 
@@ -7,9 +16,20 @@ type Props = {
   onChange: <K extends keyof GenerationRequest>(key: K, value: GenerationRequest[K]) => void;
   options: WizardOptions | null;
   documents: SourceDocument[];
+  providers: ProviderInfo[];
+  project: Project | null;
+  onProjectChange: (patch: ProjectUpdate) => void;
 };
 
-export function ConfigureStep({ request, onChange, options, documents }: Props) {
+export function ConfigureStep({
+  request,
+  onChange,
+  options,
+  documents,
+  providers,
+  project,
+  onProjectChange,
+}: Props) {
   const indexed = documents.filter((doc) => doc.status === "indexed");
 
   const sourceOptions: ChoiceOption[] = [
@@ -95,6 +115,15 @@ export function ConfigureStep({ request, onChange, options, documents }: Props) 
         {request.num_steps * request.num_hints} hint
         {request.num_steps * request.num_hints === 1 ? "" : "s"} in total.
       </p>
+
+      <div className="divider" />
+
+      <h3>Which model writes it</h3>
+      <p className="lede">
+        Saved on the project, so it applies to everything you generate here. Your materials are
+        embedded locally either way.
+      </p>
+      <ModelPicker providers={providers} project={project} onChange={onProjectChange} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.llm.provider_config import (
     CHAT_PROVIDERS,
     DEFAULT_MODELS,
+    DEFAULT_PROVIDER,
     ChatProvider,
     ProviderConfig,
 )
@@ -63,6 +64,7 @@ def list_providers() -> list[ProviderInfo]:
             ProviderInfo(
                 provider=provider,
                 available=available,
+                is_default=provider == DEFAULT_PROVIDER,
                 default_model=config.resolved_model(),
                 structured_method=config.resolved_structured_method(),
                 detail=detail,

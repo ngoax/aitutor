@@ -2,6 +2,7 @@ import type {
   GenerationRequest,
   ProblemDraft,
   Project,
+  ProjectUpdate,
   ProviderInfo,
   RetrievedChunk,
   SourceDocument,
@@ -37,6 +38,12 @@ export const api = {
     request<Project>("/projects", {
       method: "POST",
       body: JSON.stringify({ name, source_name: sourceName }),
+    }),
+
+  updateProject: (projectId: number, patch: ProjectUpdate) =>
+    request<Project>(`/projects/${projectId}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
     }),
 
   deleteProject: (projectId: number) =>

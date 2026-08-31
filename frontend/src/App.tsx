@@ -3,6 +3,7 @@ import { api } from "./api/client";
 import type {
   GenerationRequest,
   Project,
+  ProjectUpdate,
   ProviderInfo,
   ProblemDraft,
   SourceDocument,
@@ -72,6 +73,19 @@ export default function App() {
 
   useEffect(loadDocuments, [loadDocuments]);
 
+  const patchProject = useCallback(
+    async (patch: ProjectUpdate) => {
+      if (selectedId === null) return;
+      try {
+        const updated = await api.updateProject(selectedId, patch);
+        setProjects((previous) => previous.map((p) => (p.id === updated.id ? updated : p)));
+      } catch (e) {
+        setError((e as Error).message);
+      }
+    },
+    [selectedId],
+  );
+
   // Generation runs in the background too, so poll until it settles.
   useEffect(() => {
     if (selectedId === null || draft?.status !== "generating") return;
@@ -117,7 +131,14 @@ export default function App() {
     false,
   ][step];
   const furthest = selectedId === null ? 0 : indexedCount === 0 ? 1 : request.topic.trim() ? 3 : 2;
-  const usable = providers.filter((provider) => provider.available);
+
+  const project = projects.find((p) => p.id === selectedId) ?? null;
+  // What generation will actually use: the project's choice, else the backend default.
+  const activeProvider =
+    providers.find((p) => p.provider === project?.chat_provider) ??
+    providers.find((p) => p.is_default) ??
+    null;
+  const activeModel = project?.chat_model ?? activeProvider?.default_model;
 
   return (
     <div className="app">
@@ -133,11 +154,9 @@ export default function App() {
             Upload what you already teach from. Get OATutor problems, steps and hints — grounded,
             editable, yours.
           </p>
-          <span className={`llm-badge ${usable.length ? "is-on" : "is-off"}`}>
+          <span className={`llm-badge ${activeProvider?.available ? "is-on" : "is-off"}`}>
             <span className="dot" />
-            {usable.length
-              ? `${usable[0].provider} · ${usable[0].default_model}`
-              : "No model connected"}
+            {activeProvider ? `${activeProvider.provider} · ${activeModel}` : "No model connected"}
           </span>
         </div>
       </header>
@@ -170,6 +189,9 @@ export default function App() {
               onChange={update}
               options={options}
               documents={documents}
+              providers={providers}
+              project={project}
+              onProjectChange={patchProject}
             />
           )}
           {step === 3 && (

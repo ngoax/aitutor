@@ -9,6 +9,14 @@ export type Project = {
   created_at: string;
 };
 
+export type ProjectUpdate = Partial<{
+  name: string;
+  chat_provider: string | null;
+  chat_model: string | null;
+  embedding_provider: string | null;
+  embedding_model: string | null;
+}>;
+
 export type IngestionStatus = "pending" | "indexed" | "failed";
 
 export type SourceDocument = {
@@ -26,6 +34,7 @@ export type ChoiceOption = {
   value: string;
   label: string;
   description: string;
+  disabled?: boolean;
 };
 
 export type WizardOptions = {
@@ -46,6 +55,7 @@ export type GenerationRequest = {
 export type ProviderInfo = {
   provider: string;
   available: boolean;
+  is_default: boolean;
   default_model: string;
   structured_method: string;
   detail: string | null;

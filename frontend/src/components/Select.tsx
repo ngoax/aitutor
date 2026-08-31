@@ -30,9 +30,17 @@ export function Select({ label, value, options, onChange, placeholder = "Chooseâ
     if (open) setActive(Math.max(0, options.findIndex((option) => option.value === value)));
   }, [open, options, value]);
 
+  function nextEnabled(from: number, delta: number) {
+    for (let hop = 1; hop <= options.length; hop++) {
+      const index = (((from + delta * hop) % options.length) + options.length) % options.length;
+      if (!options[index].disabled) return index;
+    }
+    return from;
+  }
+
   function choose(index: number) {
     const option = options[index];
-    if (!option) return;
+    if (!option || option.disabled) return;
     onChange(option.value);
     setOpen(false);
   }
@@ -47,11 +55,11 @@ export function Select({ label, value, options, onChange, placeholder = "Chooseâ
     if (event.key === "Escape") setOpen(false);
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setActive((i) => (i + 1) % options.length);
+      setActive((i) => nextEnabled(i, 1));
     }
     if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActive((i) => (i - 1 + options.length) % options.length);
+      setActive((i) => nextEnabled(i, -1));
     }
     if (event.key === "Enter") {
       event.preventDefault();
@@ -85,10 +93,11 @@ export function Select({ label, value, options, onChange, placeholder = "Chooseâ
               key={option.value}
               role="option"
               aria-selected={option.value === value}
+              aria-disabled={option.disabled}
               className={`select-option ${index === active ? "is-active" : ""} ${
                 option.value === value ? "is-selected" : ""
-              }`}
-              onMouseEnter={() => setActive(index)}
+              } ${option.disabled ? "is-disabled" : ""}`}
+              onMouseEnter={() => !option.disabled && setActive(index)}
               onClick={() => choose(index)}
             >
               <span className="option-label">{option.label}</span>
