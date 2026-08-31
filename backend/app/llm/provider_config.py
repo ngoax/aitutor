@@ -13,20 +13,18 @@ DEFAULT_MODELS: dict[str, str] = {
     "openai": "gpt-5.4-mini",
     "anthropic": "claude-sonnet-5",
     "ollama": "gemma4:e2b",
-    "nvidia": "openai/gpt-oss-20b",
+    "nvidia": "nvidia/nemotron-3-ultra-550b-a55b",
 }
 
 StructuredMethod = Literal["json_schema", "function_calling", "json_mode"]
 
-# None means the integration chooses for itself and rejects an explicit method.
-DEFAULT_STRUCTURED_METHOD: dict[str, StructuredMethod | None] = {
+DEFAULT_STRUCTURED_METHOD: dict[str, StructuredMethod] = {
     "openai": "json_schema",
     "anthropic": "json_schema",
     # MLX builds silently drop native structured outputs and need
     # structured_method="function_calling"; GGUF builds honour json_schema.
     "ollama": "json_schema",
-    # ChatNVIDIA warns that method is unnecessary and ignores it.
-    "nvidia": None,
+    "nvidia": "json_schema",
 }
 
 
@@ -41,5 +39,5 @@ class ProviderConfig(BaseModel):
     def resolved_model(self) -> str:
         return self.model or DEFAULT_MODELS[self.provider]
 
-    def resolved_structured_method(self) -> StructuredMethod | None:
+    def resolved_structured_method(self) -> StructuredMethod:
         return self.structured_method or DEFAULT_STRUCTURED_METHOD[self.provider]

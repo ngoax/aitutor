@@ -7,5 +7,5 @@ class ProviderInfo(BaseModel):
     provider: ChatProvider
     available: bool
     default_model: str
-    structured_method: StructuredMethod | None = None
+    structured_method: StructuredMethod
     detail: str | None = None

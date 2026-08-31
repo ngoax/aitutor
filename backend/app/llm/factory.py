@@ -21,9 +21,9 @@ def get_chat_model(config: ProviderConfig | None = None) -> BaseChatModel:
             model=model, temperature=config.temperature, api_key=settings.anthropic_api_key
         )
     if config.provider == "nvidia":
-        from langchain_nvidia_ai_endpoints import ChatNVIDIA
+        from langchain_openai import ChatOpenAI
 
-        return ChatNVIDIA(
+        return ChatOpenAI(
             model=model,
             temperature=config.temperature,
             api_key=settings.nvidia_api_key,

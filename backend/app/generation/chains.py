@@ -37,12 +37,9 @@ def _generate(
     attempts: int = 3,
 ) -> T:
     config = config or ProviderConfig()
-    chat_model = get_chat_model(config)
-    method = config.resolved_structured_method()
-    if method is None:
-        model = chat_model.with_structured_output(schema)
-    else:
-        model = chat_model.with_structured_output(schema, method=method)
+    model = get_chat_model(config).with_structured_output(
+        schema, method=config.resolved_structured_method()
+    )
     messages = prompt.invoke(variables).to_messages()
 
     last_error: str | None = None
