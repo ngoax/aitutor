@@ -1,11 +1,14 @@
 import type {
   GenerationRequest,
+  HintUpdate,
   ProblemDraft,
+  ProblemUpdate,
   Project,
   ProjectUpdate,
   ProviderInfo,
   RetrievedChunk,
   SourceDocument,
+  StepUpdate,
   WizardOptions,
 } from "./types";
 
@@ -71,6 +74,28 @@ export const api = {
     }),
   getDraft: (projectId: number, problemId: number) =>
     request<ProblemDraft>(`/projects/${projectId}/drafts/${problemId}`),
+
+  updateProblem: (projectId: number, problemId: number, patch: ProblemUpdate) =>
+    request<void>(`/projects/${projectId}/problems/${problemId}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  updateStep: (projectId: number, problemId: number, stepId: number, patch: StepUpdate) =>
+    request<void>(`/projects/${projectId}/problems/${problemId}/steps/${stepId}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  updateHint: (
+    projectId: number,
+    problemId: number,
+    stepId: number,
+    hintId: number,
+    patch: HintUpdate,
+  ) =>
+    request<void>(
+      `/projects/${projectId}/problems/${problemId}/steps/${stepId}/hints/${hintId}`,
+      { method: "PATCH", body: JSON.stringify(patch) },
+    ),
 
   wizardOptions: () => request<WizardOptions>("/generation/options"),
   listProviders: () => request<ProviderInfo[]>("/providers"),

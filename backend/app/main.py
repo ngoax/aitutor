@@ -8,6 +8,7 @@ from app.api.routes import (
     drafts,
     generation,
     health,
+    hints,
     problems,
     projects,
     providers,
@@ -68,6 +69,7 @@ def create_app() -> FastAPI:
     app.include_router(projects.router, prefix="/api")
     app.include_router(problems.router, prefix="/api")
     app.include_router(steps.router, prefix="/api")
+    app.include_router(hints.router, prefix="/api")
     app.include_router(uploads.router, prefix="/api")
     app.include_router(retrieval.router, prefix="/api")
     app.include_router(providers.router, prefix="/api")

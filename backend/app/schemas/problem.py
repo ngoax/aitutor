@@ -15,6 +15,16 @@ class ProblemCreate(BaseModel):
     difficulty: str | None = None
 
 
+class ProblemUpdate(BaseModel):
+    """Teacher edits to a generated problem."""
+    title: str | None = Field(default=None, min_length=1)
+    body: str | None = None
+    course_name: str | None = None
+    oer: str | None = None
+    topic: str | None = None
+    difficulty: str | None = None
+
+
 class ProblemRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

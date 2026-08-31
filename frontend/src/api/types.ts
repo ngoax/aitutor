@@ -109,6 +109,34 @@ export type ProblemDraft = {
   steps: StepDraft[];
 };
 
+export type ProblemUpdate = Partial<{
+  title: string;
+  body: string;
+  course_name: string;
+  oer: string | null;
+  topic: string | null;
+  difficulty: string | null;
+}>;
+
+export type StepUpdate = Partial<{
+  problem_type: string;
+  answer_type: string;
+  step_title: string;
+  step_body: string;
+  step_answer: string[] | string[][];
+  answer_validator: string;
+  choices: string[] | null;
+  num_rows: number | null;
+  num_cols: number | null;
+  skills: string[];
+}>;
+
+export type HintUpdate = Partial<{
+  type: HintType;
+  title: string;
+  text: string;
+}>;
+
 export type RetrievedChunk = {
   text: string;
   citation_page: number | null;

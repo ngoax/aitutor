@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
+from app.api.editing import editable_problem, mark_edited
 from app.core.db import SessionDep
 from app.models import Problem, Project
-from app.schemas.problem import ProblemCreate, ProblemRead
+from app.schemas.problem import ProblemCreate, ProblemRead, ProblemUpdate
 
 router = APIRouter(prefix="/projects/{project_id}/problems", tags=["problems"])
 
@@ -34,6 +35,20 @@ def get_problem(project_id: int, problem_id: int, session: SessionDep) -> Proble
     problem = session.get(Problem, problem_id)
     if problem is None or problem.project_id != project_id:
         raise HTTPException(status_code=404, detail="Problem not found")
+    return problem
+
+
+@router.patch("/{problem_id}", response_model=ProblemRead)
+def update_problem(
+    project_id: int, problem_id: int, payload: ProblemUpdate, session: SessionDep
+) -> Problem:
+    problem = editable_problem(session, project_id, problem_id)
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(problem, field, value)
+    mark_edited(problem)
+    session.add(problem)
+    session.commit()
+    session.refresh(problem)
     return problem
 
 

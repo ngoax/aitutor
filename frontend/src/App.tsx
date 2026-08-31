@@ -86,6 +86,15 @@ export default function App() {
     [selectedId],
   );
 
+  const refreshDraft = useCallback(async () => {
+    if (selectedId === null || draft === null) return;
+    try {
+      setDraft(await api.getDraft(selectedId, draft.id));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }, [selectedId, draft]);
+
   // Generation runs in the background too, so poll until it settles.
   useEffect(() => {
     if (selectedId === null || draft?.status !== "generating") return;
@@ -194,13 +203,15 @@ export default function App() {
               onProjectChange={patchProject}
             />
           )}
-          {step === 3 && (
+          {step === 3 && selectedId !== null && (
             <GenerateStep
+              projectId={selectedId}
               request={request}
               draft={draft}
               busy={busy}
               error={error}
               onGenerate={runGenerate}
+              onSaved={refreshDraft}
             />
           )}
 

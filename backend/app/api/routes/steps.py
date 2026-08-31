@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import Session, select
 
+from app.api.editing import editable_step, mark_edited
 from app.core.db import SessionDep
 from app.models import Problem, Step
-from app.schemas.step import StepCreate, StepRead
+from app.schemas.step import StepCreate, StepRead, StepUpdate
 
 router = APIRouter(prefix="/projects/{project_id}/problems/{problem_id}/steps", tags=["steps"])
 
@@ -42,6 +43,20 @@ def get_step(project_id: int, problem_id: int, step_id: int, session: SessionDep
     step = session.get(Step, step_id)
     if step is None or step.problem_id != problem_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Step not found")
+    return step
+
+
+@router.patch("/{step_id}", response_model=StepRead)
+def update_step(
+    project_id: int, problem_id: int, step_id: int, payload: StepUpdate, session: SessionDep
+) -> Step:
+    step = editable_step(session, project_id, problem_id, step_id)
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(step, field, value)
+    mark_edited(step.problem)
+    session.add(step)
+    session.commit()
+    session.refresh(step)
     return step
 
 
