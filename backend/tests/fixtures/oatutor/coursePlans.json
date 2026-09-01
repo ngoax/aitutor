@@ -1,0 +1,107 @@
+[
+    {
+        "courseName": "Mission College: Introductory Statistics",
+        "language": "en",
+        "courseOER": "https://openstax.org/ <OpenStax>",
+        "courseLicense": "https://creativecommons.org/licenses/by/4.0/ <CC BY 4.0>",
+        "lessons": [
+            {
+                "id": "4oAvmgeF-j4og-dqc9Rfcvpr",
+                "name": "Lesson 3.2",
+                "topics": "Terminology",
+                "allowRecycle": true,
+                "chat_display_mode": "Window",
+                "learningObjectives": {
+                    "probability": 0.85,
+                    "terminology": 0.85
+                },
+                "chat_prompt": "PROMPTv2a.txt",
+                "chat_penalty_mode": "Never",
+                "hint_penalty_mode": "OnOpen"
+            }
+        ],
+        "chat_prompt": "PROMPTv2a.txt",
+        "chat_penalty_mode": "Never",
+        "hint_penalty_mode": "OnOpen"
+    },
+    {
+        "courseName": "OpenStax: Pre-Calculus",
+        "language": "en",
+        "courseOER": "https://openstax.org/ <OpenStax>",
+        "courseLicense": "https://creativecommons.org/licenses/by/4.0/ <CC BY 4.0>",
+        "lessons": [
+            {
+                "id": "51ukvlfX-chiP-S46rcW2BcC",
+                "name": "Lesson 1.4",
+                "topics": "- Composition of Functions",
+                "allowRecycle": true,
+                "chat_display_mode": "Window",
+                "learningObjectives": {
+                    "composition_of_functions_in_openstax_precalc": 0.85
+                },
+                "chat_prompt": "PROMPT-precalc-v1a.txt",
+                "chat_penalty_mode": "OnOpen",
+                "hint_penalty_mode": "OnOpen"
+            }
+        ],
+        "chat_prompt": "PROMPT-precalc-v1a.txt",
+        "chat_penalty_mode": "OnOpen",
+        "hint_penalty_mode": "OnOpen"
+    },
+    {
+        "courseName": "OpenStax: College Algebra",
+        "language": "en",
+        "courseOER": "https://openstax.org/details/books/college-algebra-2e <OpenStax: College Algebra>",
+        "courseLicense": "https://creativecommons.org/licenses/by/4.0/ <CC BY 4.0>",
+        "lessons": [
+            {
+                "id": "2YIIjXA4-rMQr-codjiwbXXT",
+                "name": "Lesson 6.5",
+                "topics": "Logarithmic Properties",
+                "allowRecycle": true,
+                "chat_display_mode": "Window",
+                "learningObjectives": {
+                    "condensing_logarithmic_expressions": 0.85,
+                    "expanding_logarithmic_expressions": 0.85,
+                    "the_power_rule_for_logarithms": 0.85,
+                    "the_product_rule_for_logarithms": 0.85,
+                    "the_properties_of_logarithms": 0.85,
+                    "the_quotient_rule_for_logarithms": 0.85,
+                    "using_the_change_of_base_formula_for_logarithms": 0.85,
+                    "using_the_power_rule_for_logarithms_to_simplify_the_logarithm_of_a_radical_expression": 0.85
+                },
+                "chat_prompt": "PROMPTv2a.txt",
+                "chat_penalty_mode": "Never",
+                "hint_penalty_mode": "OnOpen"
+            }
+        ],
+        "chat_prompt": "PROMPTv2a.txt",
+        "chat_penalty_mode": "Never",
+        "hint_penalty_mode": "OnOpen"
+    },
+    {
+        "courseName": "Solid Foundations: Trigonometry",
+        "language": "en",
+        "courseOER": 0.0,
+        "courseLicense": "https://creativecommons.org/licenses/by/4.0/ <CC BY 4.0>",
+        "lessons": [
+            {
+                "id": "1QuJSrCI-s9Fw-19sqFN1lzc",
+                "name": "Lesson T1.1.2",
+                "topics": "Trig Functions Defined",
+                "allowRecycle": true,
+                "chat_display_mode": "Window",
+                "learningObjectives": {
+                    "basic_trig_values": 0.85,
+                    "position_along_unit_circle": 0.85
+                },
+                "chat_prompt": "PROMPTv2a.txt",
+                "chat_penalty_mode": "Never",
+                "hint_penalty_mode": "OnOpen"
+            }
+        ],
+        "chat_prompt": "PROMPTv2a.txt",
+        "chat_penalty_mode": "Never",
+        "hint_penalty_mode": "OnOpen"
+    }
+]

@@ -97,13 +97,17 @@ def step_columns(generated: GeneratedStep, problem_type: ProblemType) -> dict:
 
 def add_hints(session: Session, step: Step, hints: list[GeneratedHint]) -> None:
     """Write a hint pathway. The last entry states the answer, and each one
-    depends on the previous so OATutor reveals them in order."""
+    depends on the previous so OATutor reveals them in order.
+
+    `solution` is ours, not OATutor's: its renderer only knows `hint` and
+    `scaffold`, so the exporter has to map it back down.
+    """
     for position, hint in enumerate(hints):
         session.add(
             HintEntry(
                 step_id=step.id,
                 order_index=position,
-                oatutor_id=f"{step.oatutor_id}h{position + 1}",
+                oatutor_id=f"{step.oatutor_id}-h{position + 1}",
                 type=HintType.SOLUTION if position == len(hints) - 1 else HintType.HINT,
                 title=hint.title,
                 text=hint.text,
