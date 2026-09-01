@@ -91,13 +91,16 @@ class GeneratedTextBoxStep(GeneratedStep):
             "Every answer that should be marked correct, as bare values with no "
             "explanation. Each entry is a value the student types, never an instruction "
             "for finding it. Include equivalent forms a student might reasonably type, "
-            "such as '0.5' and '1/2'."
+            "such as '0.5' and '1/2'. A 'string' answer is compared literally, so write "
+            "those as plain text with no $$."
         ),
     )
     answer_type: AnswerType = Field(
         description=(
-            "Use 'numeric' for a plain number, 'arithmetic' when equivalent expressions "
-            "should be accepted, 'string' for exact text."
+            "Use 'arithmetic' for anything mathematical, a plain number included: "
+            "OATutor parses it, so equivalent forms are accepted. Use 'string' only when "
+            "the answer is a word or a name and must match character for character. "
+            "Never use 'numeric'."
         )
     )
 

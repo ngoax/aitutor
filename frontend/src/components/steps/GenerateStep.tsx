@@ -78,8 +78,7 @@ export function GenerateStep({
 
       {generating && (
         <p className="field-hint">
-          <span className="spinner" /> Working. A hosted model takes seconds, a self-hosted one can
-          take minutes. You can leave this page and come back.
+          <span className="spinner" /> Tasks are being generated. You can leave this page and come back.
         </p>
       )}
 
