@@ -29,6 +29,7 @@ class Project(SQLModel, table=True):
     name: str
     # Becomes the OATutor `content-sources/<source_name>` directory on export.
     source_name: str
+    license: str = ""
     chat_provider: str | None = None
     chat_model: str | None = None
     embedding_provider: str | None = None

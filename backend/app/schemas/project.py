@@ -16,6 +16,7 @@ class ProjectUpdate(BaseModel):
     """Partial update with source_name excluded since changing it would oprhan anything written"""
 
     name: str | None = Field(default=None, min_length=1, max_length=200)
+    license: str | None = None
     chat_provider: ChatProvider | None = None
     chat_model: str | None = None
     embedding_provider: str | None = None
@@ -29,6 +30,7 @@ class ProjectRead(BaseModel):
     id: int
     name: str
     source_name: str
+    license: str = ""
     chat_provider: str | None = None
     chat_model: str | None = None
     embedding_provider: str | None = None
