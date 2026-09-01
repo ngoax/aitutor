@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import type { GenerationRequest, ProblemDraft } from "../../api/types";
 import { AnswerEditor } from "../AnswerEditor";
@@ -24,14 +24,20 @@ export function GenerateStep({
   onSaved,
 }: Props) {
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [regeneratingId, setRegeneratingId] = useState<number | null>(null);
   const generating = draft?.status === "generating";
-  const ready = draft !== null && !generating && draft.status !== "failed";
+  // Steps stay on screen while one of them is being replaced.
+  const ready = draft !== null && draft.status !== "failed" && draft.steps.length > 0;
+
+  useEffect(() => {
+    if (!generating) setRegeneratingId(null);
+  }, [generating]);
 
   async function save(run: () => Promise<unknown>) {
     setSaveError(null);
     try {
       await run();
-   
+      onSaved();
     } catch (e) {
       setSaveError((e as Error).message);
     }
@@ -79,10 +85,10 @@ export function GenerateStep({
 
       {error && <p className="error">{error}</p>}
       {saveError && <p className="error">Could not save — {saveError}</p>}
-      {draft?.status === "failed" && <p className="error">{draft.error}</p>}
+      {draft?.error && <p className="error">{draft.error}</p>}
 
       {ready && (
-        <article className="draft">
+        <article className={`draft ${generating ? "is-busy" : ""}`}>
           <header className="draft-head">
             <h3>
               <EditableText
@@ -113,6 +119,18 @@ export function GenerateStep({
                     save(() => api.updateStep(projectId, draft.id, step.id, { step_title }))
                   }
                 />
+                <button
+                  type="button"
+                  className="btn btn-ghost step-regen"
+                  disabled={generating}
+                  title="Discard this step and generate a different one"
+                  onClick={() => {
+                    setRegeneratingId(step.id);
+                    save(() => api.regenerateStep(projectId, draft.id, step.id));
+                  }}
+                >
+                  {regeneratingId === step.id ? "Regenerating…" : "Regenerate"}
+                </button>
               </h4>
 
               <EditableText

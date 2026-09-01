@@ -62,3 +62,42 @@ def generate_draft(
         previous.append(step)
 
     return GeneratedDraft(problem=problem, steps=draft_steps)
+
+
+def regenerate_step(
+    request: GenerationRequest,
+    project_id: int,
+    problem: GeneratedProblem,
+    previous_steps: list[GeneratedStep],
+    step_number: int,
+    config: ProviderConfig | None = None,
+) -> DraftStep:
+    """Generate replacement step when user is not content with current generated step"""
+    docs = retrieve(
+        project_id=project_id,
+        query=request.topic,
+        k=request.k,
+        source_document_id=request.source_document_id,
+    )
+    step = generate_step(
+        problem_title=problem.title,
+        problem_body=problem.body,
+        previous_steps=previous_steps,
+        step_number=step_number,
+        num_steps=request.num_steps,
+        problem_type=request.problem_type,
+        docs=docs,
+        config=config,
+    )
+
+    hints = None
+    if request.num_hints != 0:
+        hints = generate_hints(
+            step=step,
+            previous_steps=previous_steps,
+            problem=problem,
+            num_hints=request.num_hints,
+            docs=docs,
+            config=config,
+        )
+    return DraftStep(step=step, hints=hints)

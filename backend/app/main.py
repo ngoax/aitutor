@@ -37,7 +37,8 @@ def _fail_interrupted_work() -> None:
         ).all()
 
         for problem in problems:
-            problem.status = DraftStatus.FAILED
+            # A draft with steps only lost a regeneration, so it keeps them.
+            problem.status = DraftStatus.EDITED if problem.steps else DraftStatus.FAILED
             problem.error = "Generation was interrupted by a server restart."
             session.add(problem)
         for document in documents:
@@ -75,6 +76,7 @@ def create_app() -> FastAPI:
     app.include_router(providers.router, prefix="/api")
     app.include_router(generation.router, prefix="/api")
     app.include_router(drafts.router, prefix="/api")
+    app.include_router(drafts.step_router, prefix="/api")
     return app
 
 

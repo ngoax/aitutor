@@ -846,6 +846,19 @@ body {
   font-size: 0.9rem;
   font-weight: 650;
 }
+.step-regen {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 550;
+  padding: 0.2rem 0.5rem;
+}
+.draft-step h4 .editable {
+  flex: 1;
+}
+.draft.is-busy .draft-step {
+  opacity: 0.55;
+  pointer-events: none;
+}
 .step-num {
   display: grid;
   place-items: center;

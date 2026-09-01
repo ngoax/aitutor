@@ -17,6 +17,7 @@ class ProblemCreate(BaseModel):
 
 class ProblemUpdate(BaseModel):
     """Teacher edits to a generated problem."""
+
     title: str | None = Field(default=None, min_length=1)
     body: str | None = None
     course_name: str | None = None

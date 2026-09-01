@@ -97,6 +97,12 @@ export const api = {
       { method: "PATCH", body: JSON.stringify(patch) },
     ),
 
+  regenerateStep: (projectId: number, problemId: number, stepId: number) =>
+    request<ProblemDraft>(
+      `/projects/${projectId}/problems/${problemId}/steps/${stepId}/regenerate`,
+      { method: "POST" },
+    ),
+
   wizardOptions: () => request<WizardOptions>("/generation/options"),
   listProviders: () => request<ProviderInfo[]>("/providers"),
 

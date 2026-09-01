@@ -93,7 +93,7 @@ export function AnswerEditor({ step, onSave }: Props) {
           const lines = toLines(text);
           if (!grid) return onSave({ step_answer: lines });
           const rows = lines.map((line) => line.split("|").map((cell) => cell.trim()));
-          // Dimensions are derived, never typed, so they cannot drift from the answer.
+          // Derived, never typed, so they cannot drift from the answer.
           onSave({ step_answer: rows, num_rows: rows.length, num_cols: rows[0]?.length ?? 0 });
         }}
       />

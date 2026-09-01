@@ -86,6 +86,8 @@ class Problem(SQLModel, table=True):
     status: DraftStatus = DraftStatus.DRAFT
     # Why generation failed, shown to the teacher. Cleared on a successful run.
     error: str | None = None
+    # The wizard inputs that produced this draft, so one step can be regenerated.
+    generation_request: dict[str, Any] = _json_column(dict)
     # Chunk ids that grounded this generation for display of sources
     source_chunk_ids: list[str] = _json_column(list)
     created_at: datetime = Field(default_factory=_now)

@@ -55,8 +55,7 @@ export function EditableText({
       commit(event.target.value),
     onKeyDown: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       if (event.key === "Escape") setEditing(false);
-      // Enter commits a single line; in a textarea it has to stay a newline,
-      // so there the shortcut is the usual modifier pair.
+      // In a textarea Enter has to stay a newline.
       if (event.key === "Enter" && (!multiline || event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         commit(event.currentTarget.value);
