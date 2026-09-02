@@ -34,7 +34,8 @@ DEFAULT_TEMPERATURE: dict[str, float | None] = {
     "anthropic": 0.0,
     "ollama": 0.0,
     "nvidia": 0.0,
-    "azure": None, # reasoning models reject this param
+    # reasoning models reject this param
+    "azure": None, 
 }
 
 
