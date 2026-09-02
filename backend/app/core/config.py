@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     nvidia_api_key: str | None = None
     nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
+    azure_api_key: str | None = None
+    azure_endpoint: str | None = None
+    # Structured outputs need a recent api-version; remove if model rejects this
+    azure_api_version: str = "2024-10-21"
 
     @property
     def uploads_dir(self) -> Path:

@@ -40,6 +40,13 @@ def _availability(provider: ChatProvider) -> tuple[bool, str | None]:
             return False, "No NVIDIA_API_KEY set in backend/.env"
         return True, f"Key set, using {DEFAULT_MODELS['nvidia']} (not verified until generation)"
 
+    if provider == "azure":
+        if settings.azure_api_key is None:
+            return False, "No AZURE_API_KEY set in backend/.env"
+        if settings.azure_endpoint is None:
+            return False, "No AZURE_ENDPOINT set in backend/.env"
+        return True, f"Deployment {DEFAULT_MODELS['azure']} at {settings.azure_endpoint}"
+
     if provider == "ollama":
         models = _ollama_models()
         if models is None:

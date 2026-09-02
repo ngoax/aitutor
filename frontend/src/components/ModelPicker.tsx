@@ -12,6 +12,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   anthropic: "Anthropic",
   ollama: "Ollama (self-hosted)",
   nvidia: "NVIDIA NIM",
+  azure: "Azure OpenAI",
 };
 
 export function ModelPicker({ providers, project, onChange }: Props) {
