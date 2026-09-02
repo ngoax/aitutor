@@ -12,12 +12,13 @@ import type {
 import ethLogoBlack from "./assets/ethz_logo_black.svg";
 import { Stepper } from "./components/Stepper";
 import { ConfigureStep } from "./components/steps/ConfigureStep";
+import { ExportStep } from "./components/steps/ExportStep";
 import { GenerateStep } from "./components/steps/GenerateStep";
 import { MaterialsStep } from "./components/steps/MaterialsStep";
 import { ProjectStep } from "./components/steps/ProjectStep";
 import "./App.css";
 
-const STEPS = ["Project", "Materials", "Configure", "Generate"];
+const STEPS = ["Project", "Materials", "Configure", "Generate", "Export"];
 
 const INITIAL_REQUEST: GenerationRequest = {
   topic: "",
@@ -137,9 +138,19 @@ export default function App() {
     selectedId !== null,
     indexedCount > 0,
     request.topic.trim().length >= 3,
+    draft !== null && draft.status !== "generating",
     false,
   ][step];
-  const furthest = selectedId === null ? 0 : indexedCount === 0 ? 1 : request.topic.trim() ? 3 : 2;
+  const furthest =
+    selectedId === null
+      ? 0
+      : indexedCount === 0
+        ? 1
+        : !request.topic.trim()
+          ? 2
+          : draft === null
+            ? 3
+            : 4;
 
   const project = projects.find((p) => p.id === selectedId) ?? null;
   // What generation will actually use: the project's choice, else the backend default.
@@ -212,6 +223,14 @@ export default function App() {
               error={error}
               onGenerate={runGenerate}
               onSaved={refreshDraft}
+            />
+          )}
+
+          {step === 4 && selectedId !== null && (
+            <ExportStep
+              projectId={selectedId}
+              project={project}
+              onProjectChange={patchProject}
             />
           )}
 

@@ -1,4 +1,5 @@
 import type {
+  ExportResult,
   GenerationRequest,
   HintUpdate,
   ProblemDraft,
@@ -102,6 +103,9 @@ export const api = {
       `/projects/${projectId}/problems/${problemId}/steps/${stepId}/regenerate`,
       { method: "POST" },
     ),
+
+  exportProject: (projectId: number) =>
+    request<ExportResult>(`/projects/${projectId}/export`, { method: "POST" }),
 
   wizardOptions: () => request<WizardOptions>("/generation/options"),
   listProviders: () => request<ProviderInfo[]>("/providers"),

@@ -6,6 +6,7 @@ from sqlmodel import Session, select
 
 from app.api.routes import (
     drafts,
+    export,
     generation,
     health,
     hints,
@@ -77,6 +78,7 @@ def create_app() -> FastAPI:
     app.include_router(generation.router, prefix="/api")
     app.include_router(drafts.router, prefix="/api")
     app.include_router(drafts.step_router, prefix="/api")
+    app.include_router(export.router, prefix="/api")
     return app
 
 

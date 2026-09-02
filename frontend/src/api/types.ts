@@ -2,6 +2,7 @@ export type Project = {
   id: number;
   name: string;
   source_name: string;
+  license: string;
   chat_provider: string | null;
   chat_model: string | null;
   embedding_provider: string | null;
@@ -11,6 +12,7 @@ export type Project = {
 
 export type ProjectUpdate = Partial<{
   name: string;
+  license: string;
   chat_provider: string | null;
   chat_model: string | null;
   embedding_provider: string | null;
@@ -136,6 +138,12 @@ export type HintUpdate = Partial<{
   title: string;
   text: string;
 }>;
+
+export type ExportResult = {
+  root: string;
+  written: string[];
+  skipped: Record<string, string>;
+};
 
 export type RetrievedChunk = {
   text: string;
