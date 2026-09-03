@@ -143,6 +143,7 @@ export type ExportResult = {
   root: string;
   written: string[];
   skipped: Record<string, string>;
+  note: string | null;
 };
 
 export type RetrievedChunk = {

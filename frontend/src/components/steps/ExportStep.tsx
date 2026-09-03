@@ -70,6 +70,7 @@ export function ExportStep({ projectId, project, onProjectChange }: Props) {
           <p className="field-hint">
             Written to <code>{result.root}</code>
           </p>
+          {result.note && <p className="field-hint">{result.note}</p>}
 
           <ul className="doc-list">
             {result.written.map((id) => (

@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # Structured outputs need a recent api-version; remove if model rejects this
     azure_api_version: str = "2024-10-21"
 
+    # Point at <checkout>/src/content-sources/oatutor to merge into OATutor locally. 
+    oatutor_content_dir: Path | None = None
+
     @property
     def uploads_dir(self) -> Path:
         return self.data_dir / "uploads"

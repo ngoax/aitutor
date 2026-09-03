@@ -1,6 +1,7 @@
 """Write a project's drafts as an OATutor content source"""
 
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -27,12 +28,40 @@ GRID_TYPES = (ProblemType.GRID_INPUT, ProblemType.MATRIX_INPUT)
 GENERATED_BY = "aitutor"
 DEFAULT_MASTERY = 0.85
 BKT_DEFAULTS = {"probMastery": 0.1, "probTransit": 0.1, "probSlip": 0.1, "probGuess": 0.1}
+BKT_FILES = ("defaultBKTParams.json", "experimentalBKTParams.json")
 
 
 class ExportResult(BaseModel):
     root: str
     written: list[str]
     skipped: dict[str, str]
+    note: str | None = None
+
+
+def _export_root(project: Project) -> Path:
+    if settings.oatutor_content_dir is not None:
+        return settings.oatutor_content_dir
+    return settings.exports_dir / project.source_name
+
+
+def _rebuild_problem_pool(root: Path) -> str:
+    """OATutor serves a generated index, so new problems stay invisible until this runs."""
+    tool = root.parent.parent / "tools" / "preprocessProblemPool.js"
+    if not tool.exists():
+        return f"Run the problem pool preprocessor yourself; {tool} was not found."
+    try:
+        result = subprocess.run(
+            ["node", tool.name],
+            cwd=tool.parent,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return f"Could not run {tool.name}: {exc}"
+    if result.returncode != 0:
+        return f"{tool.name} failed: {result.stderr.strip()[:300]}"
+    return "Problem pool rebuilt. Restart the OATutor dev server to pick up the new lesson."
 
 
 def _checked(field: str, text: str) -> str:
@@ -156,7 +185,7 @@ def _merge_course_plans(plans: list[dict], project: Project, lesson: dict) -> li
 
 
 def export_project(session: Session, project: Project) -> ExportResult:
-    root = settings.exports_dir / project.source_name
+    root = _export_root(project)
     lesson_id = f"{project.source_name}-lesson"
 
     problems = session.exec(
@@ -216,11 +245,13 @@ def export_project(session: Session, project: Project) -> ExportResult:
             select(SkillDefault).where(SkillDefault.project_id == project.id)
         ).all()
     }
-    bkt_path = root / "bkt-params" / "defaultBKTParams.json"
-    bkt = _read_json(bkt_path, {})
-    for skill in used:
-        # setdefault so parameters a teacher has already tuned survive a re-export.
-        bkt.setdefault(skill, tuned.get(skill, dict(BKT_DEFAULTS)))
-    _write_json(bkt_path, bkt)
+    for name in BKT_FILES:
+        bkt_path = root / "bkt-params" / name
+        bkt = _read_json(bkt_path, {})
+        for skill in used:
+            # setdefault so parameters a teacher has already tuned survive a re-export.
+            bkt.setdefault(skill, tuned.get(skill, dict(BKT_DEFAULTS)))
+        _write_json(bkt_path, bkt)
 
-    return ExportResult(root=str(root), written=written, skipped=skipped)
+    note = _rebuild_problem_pool(root) if settings.oatutor_content_dir is not None else None
+    return ExportResult(root=str(root), written=written, skipped=skipped, note=note)
