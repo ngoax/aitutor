@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Structured outputs need a recent api-version; remove if model rejects this
     azure_api_version: str = "2024-10-21"
 
-    # Point at <checkout>/src/content-sources/oatutor to merge into OATutor locally. 
+    # Point at <checkout>/src/content-sources/oatutor to merge into OATutor. 
     oatutor_content_dir: Path | None = None
 
     @property
