@@ -57,6 +57,7 @@ def generate_draft(
                 num_hints=request.num_hints,
                 docs=docs,
                 config=config,
+                use_scaffolds=request.use_scaffolds,
             )
         draft_steps.append(DraftStep(step=step, hints=hints))
         previous.append(step)
@@ -99,5 +100,6 @@ def regenerate_step(
             num_hints=request.num_hints,
             docs=docs,
             config=config,
+            use_scaffolds=request.use_scaffolds,
         )
     return DraftStep(step=step, hints=hints)

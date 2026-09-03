@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
-from app.models import HintType
+from app.models import AnswerType, HintType, ProblemType
 from app.schemas.problem import ProblemRead
 from app.schemas.step import StepRead
 
@@ -15,6 +15,10 @@ class HintEntryRead(BaseModel):
     title: str
     text: str
     dependencies: list[int]
+    problem_type: ProblemType | None = None
+    answer_type: AnswerType | None = None
+    hint_answer: list[str] | None = None
+    choices: list[str] | None = None
 
 
 class StepDraftRead(StepRead):

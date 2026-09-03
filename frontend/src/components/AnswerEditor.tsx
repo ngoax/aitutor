@@ -1,9 +1,16 @@
-import type { StepDraft, StepUpdate } from "../api/types";
 import { EditableText } from "./EditableText";
+export type AnswerPatch = {
+  answer: string[] | string[][];
+  choices?: string[] | null;
+  numRows?: number;
+  numCols?: number;
+};
 
 type Props = {
-  step: StepDraft;
-  onSave: (patch: StepUpdate) => void;
+  problemType: string;
+  answer: string[] | string[][];
+  choices: string[] | null;
+  onSave: (patch: AnswerPatch) => void;
 };
 
 const GRID_TYPES = ["GridInput", "MatrixInput"];
@@ -22,25 +29,25 @@ function toLines(text: string): string[] {
     .filter(Boolean);
 }
 
-export function AnswerEditor({ step, onSave }: Props) {
-  if (step.problem_type === "MultipleChoice") {
-    const choices = step.choices ?? [];
-    const answer = (step.step_answer as string[])[0];
+export function AnswerEditor({ problemType, answer, choices, onSave }: Props) {
+  if (problemType === "MultipleChoice") {
+    const options = choices ?? [];
+    const selected = (answer as string[])[0];
 
     const save = (next: string[], nextAnswer: string | undefined) =>
-      onSave({ choices: next, step_answer: nextAnswer === undefined ? [] : [nextAnswer] });
+      onSave({ answer: nextAnswer === undefined ? [] : [nextAnswer], choices: next });
 
     return (
       <div className="answer-editor">
         <ul className="choice-list">
-          {choices.map((choice, index) => (
-            <li key={index} className={`choice ${choice === answer ? "is-answer" : ""}`}>
+          {options.map((choice, index) => (
+            <li key={index} className={`choice ${choice === selected ? "is-answer" : ""}`}>
               <button
                 type="button"
                 className="choice-mark"
                 title="Mark as the correct answer"
-                aria-pressed={choice === answer}
-                onClick={() => save(choices, choice)}
+                aria-pressed={choice === selected}
+                onClick={() => save(options, choice)}
               >
                 <span className="radio" />
               </button>
@@ -48,9 +55,9 @@ export function AnswerEditor({ step, onSave }: Props) {
                 className="choice-text"
                 value={choice}
                 onSave={(text) => {
-                  const next = choices.map((c, i) => (i === index ? text : c));
+                  const next = options.map((c, i) => (i === index ? text : c));
                   // Keep the answer pointing at this option after a rewording
-                  save(next, choice === answer ? text : answer);
+                  save(next, choice === selected ? text : selected);
                 }}
               />
               <button
@@ -59,8 +66,8 @@ export function AnswerEditor({ step, onSave }: Props) {
                 title="Remove this choice"
                 onClick={() =>
                   save(
-                    choices.filter((_, i) => i !== index),
-                    choice === answer ? undefined : answer,
+                    options.filter((_, i) => i !== index),
+                    choice === selected ? undefined : selected,
                   )
                 }
               >
@@ -72,7 +79,7 @@ export function AnswerEditor({ step, onSave }: Props) {
         <button
           type="button"
           className="btn btn-ghost"
-          onClick={() => save([...choices, "New choice"], answer)}
+          onClick={() => save([...options, "New choice"], selected)}
         >
           Add choice
         </button>
@@ -80,21 +87,21 @@ export function AnswerEditor({ step, onSave }: Props) {
     );
   }
 
-  const grid = GRID_TYPES.includes(step.problem_type);
+  const grid = GRID_TYPES.includes(problemType);
 
   return (
     <div className="answer-editor">
       <EditableText
         multiline
         className="answer-text"
-        value={toText(step.step_answer)}
+        value={toText(answer)}
         placeholder="No answer set"
         onSave={(text) => {
           const lines = toLines(text);
-          if (!grid) return onSave({ step_answer: lines });
+          if (!grid) return onSave({ answer: lines });
           const rows = lines.map((line) => line.split("|").map((cell) => cell.trim()));
           // Derived, never typed, so they cannot drift from the answer.
-          onSave({ step_answer: rows, num_rows: rows.length, num_cols: rows[0]?.length ?? 0 });
+          onSave({ answer: rows, numRows: rows.length, numCols: rows[0]?.length ?? 0 });
         }}
       />
       <p className="field-hint">

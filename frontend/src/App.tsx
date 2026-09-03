@@ -26,6 +26,7 @@ const INITIAL_REQUEST: GenerationRequest = {
   difficulty: "medium",
   num_steps: 3,
   num_hints: 1,
+  use_scaffolds: false,
   source_document_id: null,
   k: 4,
 };

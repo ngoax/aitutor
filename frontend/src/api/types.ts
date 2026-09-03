@@ -50,6 +50,7 @@ export type GenerationRequest = {
   difficulty: string;
   num_steps: number;
   num_hints: number;
+  use_scaffolds: boolean;
   source_document_id: number | null;
   k: number;
 };
@@ -75,6 +76,10 @@ export type HintEntry = {
   title: string;
   text: string;
   dependencies: number[];
+  problem_type: string | null;
+  answer_type: string | null;
+  hint_answer: string[] | null;
+  choices: string[] | null;
 };
 
 export type StepDraft = {
@@ -137,6 +142,10 @@ export type HintUpdate = Partial<{
   type: HintType;
   title: string;
   text: string;
+  problem_type: string;
+  answer_type: string;
+  hint_answer: string[];
+  choices: string[] | null;
 }>;
 
 export type ExportResult = {

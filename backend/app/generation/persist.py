@@ -12,11 +12,13 @@ from collections.abc import Iterable
 from sqlmodel import Session, select
 
 from app.generation.output_schemas import (
+    GeneratedChoiceScaffold,
     GeneratedGridStep,
     GeneratedHint,
     GeneratedMultipleChoiceStep,
     GeneratedProblem,
     GeneratedStep,
+    GeneratedTextBoxScaffold,
     GeneratedTextBoxStep,
 )
 from app.generation.pipeline import DraftStep, GeneratedDraft
@@ -95,6 +97,26 @@ def step_columns(generated: GeneratedStep, problem_type: ProblemType) -> dict:
     return columns
 
 
+def hint_columns(hint: GeneratedHint, is_last: bool) -> dict:
+    """Map one generated pathway entry onto the columns HintEntry stores."""
+    if isinstance(hint, GeneratedTextBoxScaffold):
+        return {
+            "type": HintType.SCAFFOLD,
+            "problem_type": ProblemType.TEXT_BOX,
+            "answer_type": hint.answer_type,
+            "hint_answer": [hint.hint_answer],
+        }
+    if isinstance(hint, GeneratedChoiceScaffold):
+        return {
+            "type": HintType.SCAFFOLD,
+            "problem_type": ProblemType.MULTIPLE_CHOICE,
+            "answer_type": AnswerType.STRING,
+            "hint_answer": [hint.hint_answer],
+            "choices": hint.choices,
+        }
+    return {"type": HintType.SOLUTION if is_last else HintType.HINT}
+
+
 def add_hints(session: Session, step: Step, hints: list[GeneratedHint]) -> None:
     """Write a hint pathway. The last entry states the answer, and each one
     depends on the previous so OATutor reveals them in order.
@@ -108,10 +130,10 @@ def add_hints(session: Session, step: Step, hints: list[GeneratedHint]) -> None:
                 step_id=step.id,
                 order_index=position,
                 oatutor_id=f"{step.oatutor_id}-h{position + 1}",
-                type=HintType.SOLUTION if position == len(hints) - 1 else HintType.HINT,
                 title=hint.title,
                 text=hint.text,
                 dependencies=[position - 1] if position else [],
+                **hint_columns(hint, is_last=position == len(hints) - 1),
             )
         )
 
@@ -122,11 +144,7 @@ def persist_draft(
     request: GenerationRequest,
     draft: GeneratedDraft,
 ) -> Problem:
-    """Fill a placeholder Problem row with the generated draft.
-
-    The row already exists because generation runs in the background: it is
-    created up front so the client has something to poll.
-    """
+    """Fill a placeholder Problem row with the generated draft."""
     problem.title = draft.problem.title
     problem.body = draft.problem.body
     problem.status = DraftStatus.DRAFT
@@ -160,8 +178,6 @@ TYPE_SPECIFIC_COLUMNS = {"choices": None, "num_rows": None, "num_cols": None}
 def replace_step(
     session: Session, step: Step, draft_step: DraftStep, problem_type: ProblemType
 ) -> Step:
-    """Overwrite one step in place. oatutor_id and order_index survive, since
-    later steps are numbered from the same sequence."""
     for column, value in (
         TYPE_SPECIFIC_COLUMNS | step_columns(draft_step.step, problem_type)
     ).items():

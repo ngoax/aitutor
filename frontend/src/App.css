@@ -907,15 +907,45 @@ body {
   font-weight: 600;
   color: var(--fg);
 }
-.hint-solution .hint-title::after {
-  content: "solution";
+.hint-solution .hint-title::after,
+.hint-scaffold .hint-title::after {
   margin-left: 0.5rem;
   padding: 0.05rem 0.35rem;
   border-radius: 3px;
-  background: var(--ok-weak);
-  color: var(--ok);
   font-size: 0.7rem;
   font-weight: 550;
+}
+.hint-solution .hint-title::after {
+  content: "solution";
+  background: var(--ok-weak);
+  color: var(--ok);
+}
+.hint-scaffold .hint-title::after {
+  content: "scaffold";
+  background: var(--accent-weak);
+  color: var(--accent);
+}
+.hint-scaffold .draft-answer {
+  margin-top: 0.4rem;
+}
+
+/* ---------- toggle ---------- */
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+.toggle input {
+  margin-top: 0.15rem;
+  accent-color: var(--accent);
+}
+.toggle.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.toggle .field-hint {
+  margin-top: 0.15rem;
 }
 .katex {
   font-size: 1.02em;

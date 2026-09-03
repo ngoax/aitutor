@@ -10,6 +10,7 @@ from app.generation.output_schemas import (
     GeneratedHintPathway,
     GeneratedMultipleChoiceStep,
     GeneratedProblem,
+    GeneratedScaffoldPathway,
     GeneratedStep,
     GeneratedTextBoxStep,
 )
@@ -17,6 +18,7 @@ from app.generation.prompts import (
     HINT_PROMPT,
     PROBLEM_PROMPT,
     RETRY_HUMAN,
+    SCAFFOLD_GUIDANCE,
     STEP_PROMPT,
     format_context,
     format_steps,
@@ -82,6 +84,7 @@ def generate_hints(
     num_hints: int,
     docs: list[Document],
     config: ProviderConfig | None = None,
+    use_scaffolds: bool = False,
 ) -> GeneratedHintPathway:
     return _generate(
         HINT_PROMPT,
@@ -93,8 +96,9 @@ def generate_hints(
             "step_answer": step.answer_text(),
             "num_hints": num_hints,
             "previous_steps": format_steps(previous_steps),
+            "scaffolds": SCAFFOLD_GUIDANCE if use_scaffolds else "",
         },
-        GeneratedHintPathway,
+        GeneratedScaffoldPathway if use_scaffolds else GeneratedHintPathway,
         config,
     )
 

@@ -113,6 +113,9 @@ def _pathway_json(step: Step, license_: str) -> list[HintJson]:
                 problem_type=hint.problem_type if scaffold else None,
                 answer_type=hint.answer_type if scaffold else None,
                 hint_answer=hint.hint_answer if scaffold else None,
+                choices=[_checked("choice", choice) for choice in hint.choices]
+                if scaffold and hint.choices
+                else None,
             )
         )
     return entries

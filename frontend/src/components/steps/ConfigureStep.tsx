@@ -10,6 +10,7 @@ import type {
 import { ModelPicker } from "../ModelPicker";
 import { NumberStepper } from "../NumberStepper";
 import { Select } from "../Select";
+import { Toggle } from "../Toggle";
 
 type Props = {
   request: GenerationRequest;
@@ -91,7 +92,11 @@ export function ConfigureStep({
           value={request.num_hints}
           min={0}
           max={7}
-          onChange={(value) => onChange("num_hints", value)}
+          onChange={(value) => {
+            onChange("num_hints", value);
+            // A pathway of one is the answer, so there is nowhere to put a scaffold.
+            if (value < 2) onChange("use_scaffolds", false);
+          }}
         />
         <NumberStepper
           label="Context chunks"
@@ -102,6 +107,14 @@ export function ConfigureStep({
           onChange={(value) => onChange("k", value)}
         />
       </div>
+
+      <Toggle
+        label="Let hints ask questions"
+        hint="A scaffold asks the student for an intermediate value instead of telling them it. Needs at least two hints per step."
+        checked={request.use_scaffolds}
+        disabled={request.num_hints < 2}
+        onChange={(value) => onChange("use_scaffolds", value)}
+      />
 
       <Select
         label="Source"

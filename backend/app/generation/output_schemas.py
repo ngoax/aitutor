@@ -1,6 +1,6 @@
 import json
 from collections import Counter
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import AfterValidator, BaseModel, Field, model_validator
 
@@ -20,12 +20,7 @@ def _no_control_chars(value: str) -> str:
 
 
 def _not_serialised_json(value: str) -> str:
-    """Reject a field whose whole value is a JSON object.
-
-    Weaker models sometimes answer by serialising an object into a single field
-    instead of filling the schema, which passes str validation and lands a blob
-    of JSON in front of the teacher.
-    """
+    """Reject a field whose whole value is a JSON object"""
     stripped = value.strip()
     if stripped.startswith("{") and stripped.endswith("}"):
         try:
@@ -41,6 +36,15 @@ def _not_serialised_json(value: str) -> str:
 
 
 PromptText = Annotated[str, AfterValidator(_no_control_chars), AfterValidator(_not_serialised_json)]
+
+
+def check_choices(choices: list[str], answer: str) -> None:
+    if len(set(choices)) != len(choices):
+        # https://stackoverflow.com/questions/9835762/how-do-i-find-the-duplicates-in-a-list-and-create-another-list-with-them
+        duplicates = [item for item, count in Counter(choices).items() if count > 1]
+        raise ValueError(f"Choices are not unique. Duplicate elements: {duplicates}")
+    if answer not in choices:
+        raise ValueError(f"Answer {answer} is not a value contained in choices: {choices}")
 
 
 class GeneratedProblem(BaseModel):
@@ -119,21 +123,8 @@ class GeneratedMultipleChoiceStep(GeneratedStep):
     )
 
     @model_validator(mode="after")
-    def no_duplicate_choices(self) -> Self:
-        """Rejects duplicate choices"""
-        if len(set(self.choices)) != len(self.choices):
-            # https://stackoverflow.com/questions/9835762/how-do-i-find-the-duplicates-in-a-list-and-create-another-list-with-them
-            duplicates = [item for item, count in Counter(self.choices).items() if count > 1]
-            raise ValueError(f"Choices are not unique. Duplicate elements: {duplicates}")
-        return self
-
-    @model_validator(mode="after")
     def answer_must_be_a_choice(self) -> Self:
-        """Rejects answer that deviates from the given choices"""
-        if self.step_answer not in self.choices:
-            raise ValueError(
-                f"Answer {self.step_answer} is not a value contained in choices: {self.choices}"
-            )
+        check_choices(self.choices, self.step_answer)
         return self
 
     def answer_text(self) -> str:
@@ -179,6 +170,9 @@ class GeneratedGridStep(GeneratedStep):
 
 
 class GeneratedHint(BaseModel):
+    """An entry the student reads and moves on from."""
+
+    kind: Literal["hint"] = "hint"
     title: PromptText = Field(
         description=(
             "A 2-5 word label for what this hint addresses, e.g. 'Which numbers multiply "
@@ -193,14 +187,89 @@ class GeneratedHint(BaseModel):
     )
 
 
-class GeneratedHintPathway(BaseModel):
-    hints: list[GeneratedHint] = Field(
+class GeneratedScaffold(GeneratedHint):
+    """An entry the student has to answer before moving on."""
+
+    text: PromptText = Field(
+        description=(
+            "The question the student answers here. Ask for one intermediate value on the "
+            "way to the step's answer, never the step's answer itself. Address them "
+            "directly and keep it to one or two sentences."
+        )
+    )
+    hint_answer: PromptText = Field(
         min_length=1,
         description=(
-            "An ordered sequence a stuck student works through, each one revealing more "
-            "than the last. The first points at the idea this step depends on without doing "
-            "any of the work. Middle hints narrow it down one move at a time. The final hint "
-            "states the answer and explains why it follows. Never repeat what an earlier "
-            "hint already gave away."
+            "The answer to the question above, as a bare value with no explanation. It is "
+            "graded against what the student types, so write only what they should enter."
         ),
+    )
+
+
+class GeneratedTextBoxScaffold(GeneratedScaffold):
+    """A scaffold the student answers by typing."""
+
+    kind: Literal["textbox_scaffold"] = "textbox_scaffold"
+    answer_type: AnswerType = Field(
+        description=(
+            "Use 'arithmetic' for anything mathematical, a plain number included. Use "
+            "'string' only when the answer is a word or a name and must match character "
+            "for character, and write those bare, with no $$. Never use 'numeric'."
+        )
+    )
+
+
+class GeneratedChoiceScaffold(GeneratedScaffold):
+    """A scaffold the student answers by picking one of several options."""
+
+    kind: Literal["choice_scaffold"] = "choice_scaffold"
+    choices: list[PromptText] = Field(
+        min_length=2,
+        description=(
+            "Generate exactly four different choices. Only ONE can be correct. The false "
+            "choices should be plausible and ideally cover common misconceptions."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def answer_must_be_a_choice(self) -> Self:
+        check_choices(self.choices, self.hint_answer)
+        return self
+
+
+PATHWAY_DESCRIPTION = (
+    "An ordered sequence a stuck student works through, each one revealing more "
+    "than the last. The first points at the idea this step depends on without doing "
+    "any of the work. Middle entries narrow it down one move at a time. The final one "
+    "states the answer and explains why it follows, so it must be a plain hint and not "
+    "a question. Never repeat what an earlier entry already gave away."
+)
+
+SCAFFOLD_DESCRIPTION = (
+    " Where a middle entry would otherwise hand over an intermediate value, ask the "
+    "student for it instead: write a scaffold, which is a question they answer inside "
+    "the hint. Only use one where answering is genuinely the next move a tutor would "
+    "ask for, and never for the step's own answer."
+)
+
+
+class GeneratedHintPathway(BaseModel):
+    hints: list[GeneratedHint] = Field(min_length=1, description=PATHWAY_DESCRIPTION)
+
+    @model_validator(mode="after")
+    def ends_with_the_answer(self) -> Self:
+        """A stuck student must always reach the answer, so the pathway cannot end
+        on a question."""
+        if isinstance(self.hints[-1], GeneratedScaffold):
+            raise ValueError(
+                "The last entry must be a plain hint stating the answer, not a scaffold "
+                "asking for it."
+            )
+        return self
+
+
+class GeneratedScaffoldPathway(GeneratedHintPathway):
+
+    hints: list[GeneratedHint | GeneratedTextBoxScaffold | GeneratedChoiceScaffold] = Field(
+        min_length=1, description=PATHWAY_DESCRIPTION + SCAFFOLD_DESCRIPTION
     )

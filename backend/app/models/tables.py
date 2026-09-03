@@ -135,6 +135,7 @@ class HintEntry(SQLModel, table=True):
     problem_type: ProblemType | None = None
     answer_type: AnswerType | None = None
     hint_answer: Any | None = Field(default=None, sa_column=Column(JSON))
+    choices: list[str] | None = Field(default=None, sa_column=Column(JSON))
 
     step: Step = Relationship(back_populates="hints")
 

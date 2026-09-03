@@ -68,6 +68,7 @@ export function GenerateStep({
           <span className="summary-key">Structure</span>
           <span className="summary-val">
             {request.num_steps} steps, {request.num_hints} hints each
+            {request.use_scaffolds && ", some asking questions"}
           </span>
         </div>
       </div>
@@ -145,9 +146,18 @@ export function GenerateStep({
               <div className="draft-answer">
                 <span className="chips">{step.answer_type}</span>
                 <AnswerEditor
-                  step={step}
-                  onSave={(patch) =>
-                    save(() => api.updateStep(projectId, draft.id, step.id, patch))
+                  problemType={step.problem_type}
+                  answer={step.step_answer}
+                  choices={step.choices}
+                  onSave={({ answer, choices, numRows, numCols }) =>
+                    save(() =>
+                      api.updateStep(projectId, draft.id, step.id, {
+                        step_answer: answer,
+                        choices,
+                        num_rows: numRows,
+                        num_cols: numCols,
+                      }),
+                    )
                   }
                 />
               </div>
@@ -176,6 +186,24 @@ export function GenerateStep({
                           )
                         }
                       />
+                      {hint.type === "scaffold" && (
+                        <div className="draft-answer">
+                          <span className="chips">the student answers this</span>
+                          <AnswerEditor
+                            problemType={hint.problem_type ?? "TextBox"}
+                            answer={hint.hint_answer ?? []}
+                            choices={hint.choices}
+                            onSave={({ answer, choices }) =>
+                              save(() =>
+                                api.updateHint(projectId, draft.id, step.id, hint.id, {
+                                  hint_answer: answer as string[],
+                                  choices,
+                                }),
+                              )
+                            }
+                          />
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ol>

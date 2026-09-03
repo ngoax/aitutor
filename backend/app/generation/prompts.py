@@ -119,6 +119,18 @@ HINT_HUMAN = (
     "Each hint reveals more than the one before it. The last one is the solution: it must "
     "give the answer ({step_answer}) and explain why it follows. No earlier hint may give "
     "it away. If you write only one hint, that hint is the solution."
+    "{scaffolds}"
+)
+
+SCAFFOLD_GUIDANCE = (
+    "\n\nYou may write some of the entries before the last one as scaffolds. A scaffold "
+    "asks the student for one intermediate value instead of telling them it, and they type "
+    "or select their answer inside the hint. Write one only where the student is ready to "
+    "produce that value from what the earlier entries have given them. Its answer is graded "
+    "by the same code as a step answer, so it must be exactly what the student enters and "
+    "must never be the step's own answer given above. Keep the opening entry a plain "
+    "hint: a student who is already stuck needs to be told something before being asked "
+    "anything."
 )
 
 HINT_PROMPT = ChatPromptTemplate.from_messages(

@@ -11,6 +11,8 @@ class GenerationRequest(BaseModel):
     difficulty: Literal["easy", "medium", "hard"] = "medium"
     num_steps: int = Field(default=3, ge=1, le=7)
     num_hints: int = Field(default=1, ge=0, le=7)
+    # Off by default so a draft stored before scaffolds existed replays unchanged.
+    use_scaffolds: bool = False
     source_document_id: int | None = None
     k: int = Field(default=4, ge=1, le=20)
 

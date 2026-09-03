@@ -93,13 +93,24 @@ class HintJson(OATutorModel):
             "hintAnswer": self.hint_answer,
         }
         if self.type == "scaffold":
-            absent = [name for name, value in answerable.items() if value is None]
+            absent = [name for name, value in answerable.items() if value is None or value == []]
             if absent:
                 raise ValueError(f"Scaffold {self.id} is missing {', '.join(absent)}")
         else:
             present = [name for name, value in answerable.items() if value is not None]
             if present:
                 raise ValueError(f"Hint {self.id} must not set {', '.join(present)}")
+        return self
+
+    @model_validator(mode="after")
+    def scaffold_answers_must_be_choices(self) -> Self:
+        if self.problem_type is not ProblemType.MULTIPLE_CHOICE:
+            return self
+        if self.choices is None or len(self.choices) < 2:
+            raise ValueError(f"Scaffold {self.id} needs at least two choices, got {self.choices}")
+        missing = [answer for answer in self.hint_answer or [] if answer not in self.choices]
+        if missing:
+            raise ValueError(f"Answers {missing} are not among the choices {self.choices}")
         return self
 
 
