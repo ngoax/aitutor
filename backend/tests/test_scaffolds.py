@@ -127,3 +127,50 @@ def test_scaffold_without_an_answer_is_rejected(session, step):
 
     with pytest.raises(ValidationError, match="hintAnswer"):
         HintPathwayJson(_pathway_json(step, LICENSE))
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        {"text": "The model is \\(y = mx + b\\), a straight line."},
+        {"title": "Solve \\[x^2 = 9\\]"},
+    ],
+)
+def test_delimiters_oatutor_ignores_are_rejected(session, step, field):
+    add_hints(session, step, GeneratedHintPathway.model_validate({"hints": [OPENER]}).hints)
+    session.commit()
+    for key, value in field.items():
+        setattr(step.hints[0], key, value)
+    session.commit()
+
+    with pytest.raises(ValueError, match="plain text"):
+        _pathway_json(step, LICENSE)
+
+
+def test_scaffold_answer_may_not_carry_them_either(session, step):
+    """A scaffold answer is graded, so KAS would never parse it."""
+    pathway = GeneratedScaffoldPathway.model_validate({"hints": [OPENER, TEXT_SCAFFOLD, CLOSER]})
+    add_hints(session, step, pathway.hints)
+    session.commit()
+    step.hints[1].hint_answer = ["\\(12\\)"]
+    session.commit()
+
+    with pytest.raises(ValueError, match="hintAnswer"):
+        _pathway_json(step, LICENSE)
+
+
+def test_real_latex_survives(session, step):
+    pathway = GeneratedScaffoldPathway.model_validate(
+        {
+            "hints": [
+                OPENER,
+                TEXT_SCAFFOLD | {"hint_answer": "$$\\left(\\frac{1}{2}\\right)$$"},
+                CLOSER,
+            ]
+        }
+    )
+    add_hints(session, step, pathway.hints)
+    session.commit()
+
+    entries = _pathway_json(step, LICENSE)
+    assert entries[1].hint_answer == ["$$\\left(\\frac{1}{2}\\right)$$"]

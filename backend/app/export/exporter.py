@@ -9,7 +9,11 @@ from pydantic import BaseModel, ValidationError
 from sqlmodel import Session, select
 
 from app.core.config import settings
-from app.export.markdown_utils import to_oatutor_text, unbalanced_delimiters
+from app.export.markdown_utils import (
+    ignored_delimiters,
+    to_oatutor_text,
+    unbalanced_delimiters,
+)
 from app.export.oatutor_schema import HintJson, ProblemJson, StepJson
 from app.generation.persist import slugify
 from app.models import (
@@ -64,12 +68,31 @@ def _rebuild_problem_pool(root: Path) -> str:
     return "Problem pool rebuilt. Restart the OATutor dev server to pick up the new lesson."
 
 
+def _reject_ignored(field: str, value: str) -> None:
+    ignored = ignored_delimiters(value)
+    if ignored:
+        raise ValueError(
+            f"{field} wraps maths in {' and '.join(ignored)}, which OATutor prints "
+            "as plain text. Use $$ instead."
+        )
+
+
 def _checked(field: str, text: str) -> str:
     value = to_oatutor_text(text)
     odd = unbalanced_delimiters(value)
     if odd:
         raise ValueError(f"{field} has an unclosed {' and '.join(odd)}")
+    _reject_ignored(field, value)
     return value
+
+
+def _checked_answers(field: str, values: list) -> list[str]:
+    """Answers are graded rather than rendered, so they keep their text as written.
+    A delimiter OATutor ignores still has to go: KAS would never parse it."""
+    answers = [str(value) for value in values]
+    for answer in answers:
+        _reject_ignored(field, answer)
+    return answers
 
 
 def _answer_strings(step: Step) -> list[str]:
@@ -77,7 +100,7 @@ def _answer_strings(step: Step) -> list[str]:
     answer = step.step_answer or []
     if step.problem_type in GRID_TYPES:
         return [json.dumps(answer)]
-    return [str(value) for value in answer]
+    return _checked_answers("stepAnswer", answer)
 
 
 def _step_json(step: Step) -> StepJson:
@@ -112,7 +135,9 @@ def _pathway_json(step: Step, license_: str) -> list[HintJson]:
                 license=license_,
                 problem_type=hint.problem_type if scaffold else None,
                 answer_type=hint.answer_type if scaffold else None,
-                hint_answer=hint.hint_answer if scaffold else None,
+                hint_answer=_checked_answers("hintAnswer", hint.hint_answer or [])
+                if scaffold
+                else None,
                 choices=[_checked("choice", choice) for choice in hint.choices]
                 if scaffold and hint.choices
                 else None,

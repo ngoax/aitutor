@@ -6,15 +6,7 @@ type Props = {
   children: string;
   className?: string;
 };
-
-// Models emit whichever delimiters they were trained on, so accept all four.
-const DELIMITERS = [
-  { left: "$$", right: "$$", display: true },
-  { left: "\\[", right: "\\]", display: true },
-  { left: "\\(", right: "\\)", display: false },
-  { left: "$", right: "$", display: false },
-];
-
+const DELIMITERS = [{ left: "$$", right: "$$", display: false }];
 /** Renders generated text, turning any LaTeX it contains into maths. */
 export function MathText({ children, className }: Props) {
   const host = useRef<HTMLSpanElement>(null);

@@ -269,7 +269,6 @@ class GeneratedHintPathway(BaseModel):
 
 
 class GeneratedScaffoldPathway(GeneratedHintPathway):
-
     hints: list[GeneratedHint | GeneratedTextBoxScaffold | GeneratedChoiceScaffold] = Field(
         min_length=1, description=PATHWAY_DESCRIPTION + SCAFFOLD_DESCRIPTION
     )
