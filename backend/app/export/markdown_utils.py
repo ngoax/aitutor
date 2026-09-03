@@ -18,3 +18,14 @@ def unbalanced_delimiters(text: str) -> list[str]:
 def ignored_delimiters(text: str) -> list[str]:
     """Delimiters that OATutor renders as plain text instead of as maths"""
     return [delimiter for delimiter in IGNORED_DELIMITERS if delimiter in text]
+
+
+def has_stray_dollar(text: str) -> bool:
+    """Whether a $ is used on its own, which OATutor prints rather than reads"""
+    return bool(text.replace(r"\$", "").replace("$$", "").count("$"))
+
+
+def comma_answers(values: list[str]) -> list[str]:
+    """KAS errors on any comma, so an arithmetic answer
+    holding one never grades, whatever the student types"""
+    return [value for value in values if "," in value]

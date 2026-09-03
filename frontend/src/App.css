@@ -1048,3 +1048,22 @@ body {
   color: var(--fg);
   font-weight: 550;
 }
+
+.chip-toggle {
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.05rem 0.4rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 3px;
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+.chip-toggle:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.chip-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

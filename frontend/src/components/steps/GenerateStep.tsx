@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import type { GenerationRequest, ProblemDraft } from "../../api/types";
 import { AnswerEditor } from "../AnswerEditor";
+import { AnswerTypeToggle } from "../AnswerTypeToggle";
 import { EditableText } from "../EditableText";
 
 type Props = {
@@ -144,7 +145,19 @@ export function GenerateStep({
               />
 
               <div className="draft-answer">
-                <span className="chips">{step.answer_type}</span>
+                {step.problem_type === "TextBox" ? (
+                  <AnswerTypeToggle
+                    value={step.answer_type}
+                    disabled={generating}
+                    onChange={(answer_type) =>
+                      save(() =>
+                        api.updateStep(projectId, draft.id, step.id, { answer_type }),
+                      )
+                    }
+                  />
+                ) : (
+                  <span className="chips">{step.answer_type}</span>
+                )}
                 <AnswerEditor
                   problemType={step.problem_type}
                   answer={step.step_answer}
@@ -189,6 +202,19 @@ export function GenerateStep({
                       {hint.type === "scaffold" && (
                         <div className="draft-answer">
                           <span className="chips">the student answers this</span>
+                          {hint.problem_type === "TextBox" && (
+                            <AnswerTypeToggle
+                              value={hint.answer_type ?? "arithmetic"}
+                              disabled={generating}
+                              onChange={(answer_type) =>
+                                save(() =>
+                                  api.updateHint(projectId, draft.id, step.id, hint.id, {
+                                    answer_type,
+                                  }),
+                                )
+                              }
+                            />
+                          )}
                           <AnswerEditor
                             problemType={hint.problem_type ?? "TextBox"}
                             answer={hint.hint_answer ?? []}

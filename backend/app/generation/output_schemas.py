@@ -4,6 +4,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import AfterValidator, BaseModel, Field, model_validator
 
+from app.export.markdown_utils import comma_answers, has_stray_dollar
 from app.models import AnswerType
 
 
@@ -35,7 +36,21 @@ def _not_serialised_json(value: str) -> str:
     return value
 
 
-PromptText = Annotated[str, AfterValidator(_no_control_chars), AfterValidator(_not_serialised_json)]
+def _no_stray_dollar(value: str) -> str:
+    if has_stray_dollar(value):
+        raise ValueError(
+            "uses a single $ where OATutor only recognises $$, so it would be printed "
+            r"literally. Wrap maths in $$, and write a dollar sign as \$."
+        )
+    return value
+
+
+PromptText = Annotated[
+    str,
+    AfterValidator(_no_control_chars),
+    AfterValidator(_not_serialised_json),
+    AfterValidator(_no_stray_dollar),
+]
 
 
 def check_choices(choices: list[str], answer: str) -> None:
@@ -45,6 +60,20 @@ def check_choices(choices: list[str], answer: str) -> None:
         raise ValueError(f"Choices are not unique. Duplicate elements: {duplicates}")
     if answer not in choices:
         raise ValueError(f"Answer {answer} is not a value contained in choices: {choices}")
+
+
+def check_arithmetic(answer_type: AnswerType, answers: list[str]) -> None:
+    """Shared by the TextBox step and the TextBox scaffold, which OATutor grades
+    with the same parser"""
+    if answer_type is not AnswerType.ARITHMETIC:
+        return
+    commas = comma_answers(answers)
+    if commas:
+        raise ValueError(
+            f"Arithmetic answers {commas} contain a comma, which OATutor's parser "
+            "rejects, so the step could never be answered. Ask for a single value "
+            "instead, or use 'string' if the answer really is a list."
+        )
 
 
 class GeneratedProblem(BaseModel):
@@ -104,9 +133,15 @@ class GeneratedTextBoxStep(GeneratedStep):
             "Use 'arithmetic' for anything mathematical, a plain number included: "
             "OATutor parses it, so equivalent forms are accepted. Use 'string' only when "
             "the answer is a word or a name and must match character for character. "
-            "Never use 'numeric'."
+            "Never use 'numeric'. The parser rejects commas, so an answer containing "
+            "one must be 'string' rather than 'arithmetic'."
         )
     )
+
+    @model_validator(mode="after")
+    def answers_must_be_parsable(self) -> Self:
+        check_arithmetic(self.answer_type, self.step_answer)
+        return self
 
     def answer_text(self) -> str:
         return " or ".join(self.step_answer)
@@ -217,6 +252,11 @@ class GeneratedTextBoxScaffold(GeneratedScaffold):
             "for character, and write those bare, with no $$. Never use 'numeric'."
         )
     )
+
+    @model_validator(mode="after")
+    def answer_must_be_parsable(self) -> Self:
+        check_arithmetic(self.answer_type, [self.hint_answer])
+        return self
 
 
 class GeneratedChoiceScaffold(GeneratedScaffold):

@@ -10,6 +10,8 @@ from sqlmodel import Session, select
 
 from app.core.config import settings
 from app.export.markdown_utils import (
+    comma_answers,
+    has_stray_dollar,
     ignored_delimiters,
     to_oatutor_text,
     unbalanced_delimiters,
@@ -17,6 +19,7 @@ from app.export.markdown_utils import (
 from app.export.oatutor_schema import HintJson, ProblemJson, StepJson
 from app.generation.persist import slugify
 from app.models import (
+    AnswerType,
     DraftStatus,
     HintType,
     Problem,
@@ -83,15 +86,24 @@ def _checked(field: str, text: str) -> str:
     if odd:
         raise ValueError(f"{field} has an unclosed {' and '.join(odd)}")
     _reject_ignored(field, value)
+    if has_stray_dollar(value):
+        raise ValueError(
+            f"{field} uses a single $ where OATutor only recognises $$, so it would be "
+            r"printed literally. Wrap maths in $$, and write a dollar sign as \$."
+        )
     return value
 
 
-def _checked_answers(field: str, values: list) -> list[str]:
-    """Answers are graded rather than rendered, so they keep their text as written.
-    A delimiter OATutor ignores still has to go: KAS would never parse it."""
+def _checked_answers(field: str, values: list, answer_type: AnswerType) -> list[str]:
+    """Answers are graded rather than rendered, so they keep their text as written"""
     answers = [str(value) for value in values]
     for answer in answers:
         _reject_ignored(field, answer)
+    if answer_type is AnswerType.ARITHMETIC and (commas := comma_answers(answers)):
+        raise ValueError(
+            f"{field} {commas} contains a comma, which OATutor's parser rejects, so "
+            "the answer could never be entered. Use answerType 'string' for a list."
+        )
     return answers
 
 
@@ -100,7 +112,7 @@ def _answer_strings(step: Step) -> list[str]:
     answer = step.step_answer or []
     if step.problem_type in GRID_TYPES:
         return [json.dumps(answer)]
-    return _checked_answers("stepAnswer", answer)
+    return _checked_answers("stepAnswer", answer, step.answer_type)
 
 
 def _step_json(step: Step) -> StepJson:
@@ -135,7 +147,7 @@ def _pathway_json(step: Step, license_: str) -> list[HintJson]:
                 license=license_,
                 problem_type=hint.problem_type if scaffold else None,
                 answer_type=hint.answer_type if scaffold else None,
-                hint_answer=_checked_answers("hintAnswer", hint.hint_answer or [])
+                hint_answer=_checked_answers("hintAnswer", hint.hint_answer or [], hint.answer_type)
                 if scaffold
                 else None,
                 choices=[_checked("choice", choice) for choice in hint.choices]
@@ -192,6 +204,14 @@ def _write_json(path: Path, data: Any) -> None:
     path.write_text(json.dumps(data, indent=4) + "\n")
 
 
+def _still_served(root: Path, skipped: dict[str, str]) -> dict[str, str]:
+    stale = " An earlier export of this problem is still on disk and still being served."
+    return {
+        name: reason + stale if (root / "content-pool" / name).exists() else reason
+        for name, reason in skipped.items()
+    }
+
+
 def _merge_course_plans(plans: list[dict], project: Project, lesson: dict) -> list[dict]:
     course = next((c for c in plans if c.get("courseName") == project.name), None)
     if course is None:
@@ -241,6 +261,7 @@ def export_project(session: Session, project: Project) -> ExportResult:
         skill_model.update(skills)
         written.append(problem.oatutor_id)
 
+    skipped = _still_served(root, skipped)
     if not written:
         return ExportResult(root=str(root), written=written, skipped=skipped)
 
@@ -250,7 +271,7 @@ def export_project(session: Session, project: Project) -> ExportResult:
     merged_skills = _read_json(root / "skillModel.json", {}) | skill_model
     _write_json(root / "skillModel.json", merged_skills)
 
-    used = sorted({skill for names in merged_skills.values() for skill in names})
+    used = sorted({skill for names in skill_model.values() for skill in names})
     lesson = {
         "id": lesson_id,
         "name": project.name,

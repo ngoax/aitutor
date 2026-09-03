@@ -45,6 +45,8 @@ SYSTEM = (
     "Write for a student meeting this material for the first time, not for an expert. "
     "Write mathematics as LaTeX wrapped in $$, in every field: answers and choices too, "
     "not only prose. OATutor renders $$ inline as well, so never use \\( or \\[. "
+    "A single $ is not a delimiter and would be printed as a dollar sign, so never use "
+    r"one on its own; write an actual dollar sign as \\$. "
     "The answer is JSON, so backslashes must be escaped: "
     r"write \\frac so that it decodes to \frac. The text a student finally reads must "
     "contain single backslashes, never double ones. "
