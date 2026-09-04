@@ -1,5 +1,6 @@
 """Pydantic mirror of the JSON OATutor actually reads."""
 
+import re
 from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
@@ -8,6 +9,8 @@ from pydantic.alias_generators import to_camel
 from app.models import AnswerType, ProblemType
 
 ExportHintType = Literal["hint", "scaffold"]
+
+MATRIX_ENVIRONMENT = re.compile(r"\\begin\{[a-zA-Z]?matrix\}")
 
 
 class OATutorModel(BaseModel):
@@ -52,6 +55,36 @@ class StepJson(OATutorModel):
         missing = [answer for answer in self.step_answer if answer not in self.choices]
         if missing:
             raise ValueError(f"Answers {missing} are not among the choices {self.choices}")
+        return self
+
+    @model_validator(mode="after")
+    def matrix_is_inferred_from_its_answer(self) -> Self:
+        """OATutor decides a step is a matrix by matching the answer, never by reading
+        problemType, and only reaches that branch through the arithmetic path."""
+        if self.problem_type is not ProblemType.MATRIX_INPUT:
+            return self
+        if not MATRIX_ENVIRONMENT.search(self.step_answer[0]):
+            raise ValueError(
+                f"MatrixInput step {self.id} has answer {self.step_answer[0]!r}, which "
+                "carries no \\begin{matrix}, so it would render as a plain text box"
+            )
+        if self.answer_type is not AnswerType.ARITHMETIC:
+            raise ValueError(
+                f"MatrixInput step {self.id} needs answerType 'arithmetic'; "
+                f"{self.answer_type} never reaches the matrix comparison"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def grid_is_compared_literally(self) -> Self:
+        """A grid answer is the JSON the widget submits, so KAS never sees it."""
+        if self.problem_type is ProblemType.GRID_INPUT and self.answer_type is not (
+            AnswerType.STRING
+        ):
+            raise ValueError(
+                f"GridInput step {self.id} needs answerType 'string'; the widget submits "
+                f"JSON, which {self.answer_type} cannot parse"
+            )
         return self
 
     @model_validator(mode="after")

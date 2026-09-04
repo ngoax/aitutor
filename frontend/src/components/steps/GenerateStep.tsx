@@ -111,7 +111,7 @@ export function GenerateStep({
           <p className="edit-note">Click any text to rewrite it. Press ESC to cancel.</p>
 
           {draft.steps.map((step, index) => (
-            <section key={step.id} className="draft-step">
+            <section key={step.id} className={`draft-step ${step.stale ? "is-stale" : ""}`}>
               <h4>
                 <span className="step-num">{index + 1}</span>
                 <EditableText
@@ -133,6 +133,13 @@ export function GenerateStep({
                   {regeneratingId === step.id ? "Regenerating…" : "Regenerate"}
                 </button>
               </h4>
+
+              {step.stale && (
+                <p className="stale-note">
+                  An earlier step was rewritten after this one, so it may no longer follow on.
+                  Regenerate it, or edit it to dismiss this.
+                </p>
+              )}
 
               <EditableText
                 multiline

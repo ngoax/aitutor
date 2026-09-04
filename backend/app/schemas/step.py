@@ -49,3 +49,4 @@ class StepRead(BaseModel):
     num_rows: int | None = None
     num_cols: int | None = None
     skills: list[str]
+    stale: bool = False

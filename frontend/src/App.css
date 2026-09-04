@@ -1067,3 +1067,13 @@ body {
   cursor: not-allowed;
   opacity: 0.5;
 }
+
+.draft-step.is-stale {
+  border-left: 2px solid var(--warn);
+  padding-left: 0.75rem;
+}
+.stale-note {
+  margin: 0.2rem 0 0.6rem;
+  font-size: 0.8rem;
+  color: var(--warn);
+}

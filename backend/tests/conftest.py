@@ -1,6 +1,9 @@
+import json
+
 import pytest
 from sqlmodel import Session, SQLModel, create_engine
 
+from app.core.config import settings
 from app.models import Problem, Project, Step
 
 
@@ -25,3 +28,11 @@ def step(session):
     session.commit()
     session.refresh(step)
     return step
+
+
+@pytest.fixture
+def populated_root(tmp_path, monkeypatch):
+    """An OATutor content source that already holds someone else's course."""
+    (tmp_path / "skillModel.json").write_text(json.dumps({"их_step": ["someone_elses_skill"]}))
+    monkeypatch.setattr(settings, "oatutor_content_dir", tmp_path)
+    return tmp_path

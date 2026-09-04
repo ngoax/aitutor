@@ -29,3 +29,16 @@ def comma_answers(values: list[str]) -> list[str]:
     """KAS errors on any comma, so an arithmetic answer
     holding one never grades, whatever the student types"""
     return [value for value in values if "," in value]
+
+
+def dollar_wrapped(values: list[str]) -> list[str]:
+    """Answers a student could never type. A string answer is compared literally and
+    $$ is not stripped, so the delimiters become part of what they must enter"""
+    return [value for value in values if "$$" in value]
+
+MATRIX_ENVIRONMENT = "bmatrix"
+
+def matrix_latex(rows: list[list[str]]) -> str:
+    """Rows as the LaTeX matrix OATutor reads, one row per list"""
+    body = " \\\\ ".join(" & ".join(cell for cell in row) for row in rows)
+    return f"$$\\begin{{{MATRIX_ENVIRONMENT}}} {body} \\end{{{MATRIX_ENVIRONMENT}}}$$"

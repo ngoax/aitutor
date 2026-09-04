@@ -11,8 +11,10 @@ from sqlmodel import Session, select
 from app.core.config import settings
 from app.export.markdown_utils import (
     comma_answers,
+    dollar_wrapped,
     has_stray_dollar,
     ignored_delimiters,
+    matrix_latex,
     to_oatutor_text,
     unbalanced_delimiters,
 )
@@ -30,7 +32,6 @@ from app.models import (
 )
 
 PATHWAY_SUFFIX = "DefaultPathway"
-GRID_TYPES = (ProblemType.GRID_INPUT, ProblemType.MATRIX_INPUT)
 # Hint 'oer' records who wrote the hint; upstream uses "openai" for generated ones.
 GENERATED_BY = "aitutor"
 DEFAULT_MASTERY = 0.85
@@ -94,7 +95,9 @@ def _checked(field: str, text: str) -> str:
     return value
 
 
-def _checked_answers(field: str, values: list, answer_type: AnswerType) -> list[str]:
+def _checked_answers(
+    field: str, values: list, problem_type: ProblemType, answer_type: AnswerType
+) -> list[str]:
     """Answers are graded rather than rendered, so they keep their text as written"""
     answers = [str(value) for value in values]
     for answer in answers:
@@ -104,15 +107,24 @@ def _checked_answers(field: str, values: list, answer_type: AnswerType) -> list[
             f"{field} {commas} contains a comma, which OATutor's parser rejects, so "
             "the answer could never be entered. Use answerType 'string' for a list."
         )
+    if problem_type is not ProblemType.MULTIPLE_CHOICE and answer_type is AnswerType.STRING:
+        if wrapped := dollar_wrapped(answers):
+            raise ValueError(
+                f"{field} {wrapped} is wrapped in $$, which a string answer compares "
+                "literally instead of stripping, so the student would have to type the "
+                "$$ as well. Write it bare."
+            )
     return answers
 
 
 def _answer_strings(step: Step) -> list[str]:
     """Grid answers are rows in the database and one stringified list of lists here."""
     answer = step.step_answer or []
-    if step.problem_type in GRID_TYPES:
+    if step.problem_type is ProblemType.MATRIX_INPUT:
+        return [matrix_latex(answer)]
+    if step.problem_type is ProblemType.GRID_INPUT:
         return [json.dumps(answer)]
-    return _checked_answers("stepAnswer", answer, step.answer_type)
+    return _checked_answers("stepAnswer", answer, step.problem_type, step.answer_type)
 
 
 def _step_json(step: Step) -> StepJson:
@@ -124,8 +136,8 @@ def _step_json(step: Step) -> StepJson:
         step_title=_checked("stepTitle", step.step_title),
         step_body=_checked("stepBody", step.step_body),
         choices=[_checked("choice", choice) for choice in step.choices] if step.choices else None,
-        num_rows=step.num_rows,
-        num_cols=step.num_cols,
+        num_rows=step.num_rows if step.problem_type is ProblemType.GRID_INPUT else None,
+        num_cols=step.num_cols if step.problem_type is ProblemType.GRID_INPUT else None,
     )
 
 
@@ -147,7 +159,9 @@ def _pathway_json(step: Step, license_: str) -> list[HintJson]:
                 license=license_,
                 problem_type=hint.problem_type if scaffold else None,
                 answer_type=hint.answer_type if scaffold else None,
-                hint_answer=_checked_answers("hintAnswer", hint.hint_answer or [], hint.answer_type)
+                hint_answer=_checked_answers(
+                    "hintAnswer", hint.hint_answer or [], hint.problem_type, hint.answer_type
+                )
                 if scaffold
                 else None,
                 choices=[_checked("choice", choice) for choice in hint.choices]

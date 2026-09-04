@@ -53,6 +53,7 @@ def update_step(
     step = editable_step(session, project_id, problem_id, step_id)
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(step, field, value)
+    step.stale = False
     mark_edited(step.problem)
     session.add(step)
     session.commit()

@@ -115,6 +115,7 @@ class Step(SQLModel, table=True):
     num_cols: int | None = None
     skills: list[str] = _json_column(list)
     variabilization: dict[str, Any] = _json_column(dict)
+    stale: bool = False
 
     problem: Problem = Relationship(back_populates="steps")
     hints: list["HintEntry"] = Relationship(back_populates="step", cascade_delete=True)

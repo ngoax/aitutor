@@ -2,22 +2,12 @@
 
 import json
 
-import pytest
-
-from app.core.config import settings
 from app.export.exporter import export_project
-from app.models import AnswerType, HintEntry, HintType, Step
-
-
-@pytest.fixture
-def populated_root(tmp_path, monkeypatch):
-    """An OATutor content source that already holds someone else's course."""
-    (tmp_path / "skillModel.json").write_text(json.dumps({"их_step": ["someone_elses_skill"]}))
-    monkeypatch.setattr(settings, "oatutor_content_dir", tmp_path)
-    return tmp_path
+from app.models import AnswerType, HintEntry, HintType, ProblemType, Step
 
 
 def _answerable(session, step: Step) -> None:
+    step.answer_type = AnswerType.ARITHMETIC
     step.step_answer = ["$$24$$"]
     step.skills = ["our_skill"]
     session.add(step)
@@ -114,6 +104,29 @@ def test_the_same_answer_passes_as_string(session, step, populated_root):
     _answerable(session, step)
     step.answer_type = AnswerType.STRING
     step.step_answer = ["-9,8", "8,-9"]
+    session.commit()
+
+    assert export_project(session, step.problem.project).written == [step.problem.oatutor_id]
+
+
+def test_string_answer_wrapped_in_dollars_is_rejected(session, step, populated_root):
+
+    _answerable(session, step)
+    step.answer_type = AnswerType.STRING
+    step.step_answer = ["$$-9,8$$"]
+    session.commit()
+
+    result = export_project(session, step.problem.project)
+    assert result.written == []
+    assert "type the $$" in result.skipped[step.problem.oatutor_id]
+
+
+def test_multiple_choice_may_keep_its_dollars(session, step, populated_root):
+    _answerable(session, step)
+    step.problem_type = ProblemType.MULTIPLE_CHOICE
+    step.answer_type = AnswerType.STRING
+    step.step_answer = ["$$-9$$"]
+    step.choices = ["$$-9$$", "$$8$$"]
     session.commit()
 
     assert export_project(session, step.problem.project).written == [step.problem.oatutor_id]

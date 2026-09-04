@@ -97,6 +97,7 @@ export type StepDraft = {
   num_rows: number | null;
   num_cols: number | null;
   skills: string[];
+  stale: boolean;
   hints: HintEntry[];
 };
 

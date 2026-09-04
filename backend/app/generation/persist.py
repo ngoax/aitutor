@@ -86,11 +86,12 @@ def step_columns(generated: GeneratedStep, problem_type: ProblemType) -> dict:
         columns["choices"] = generated.choices
         columns["answer_type"] = AnswerType.STRING
     elif isinstance(generated, GeneratedGridStep):
-        # Flat rows exist because nested lists are unreliable to generate.
-        # This is where they become the list of lists the Step column holds.
         columns["step_answer"] = [row.split("|") for row in generated.rows]
         columns["num_rows"] = generated.num_rows
         columns["num_cols"] = generated.num_cols
+        columns["answer_type"] = (
+            AnswerType.ARITHMETIC if problem_type is ProblemType.MATRIX_INPUT else AnswerType.STRING
+        )
     else:
         raise ValueError(f"No column mapping for {type(generated).__name__}")
 
@@ -118,12 +119,6 @@ def hint_columns(hint: GeneratedHint, is_last: bool) -> dict:
 
 
 def add_hints(session: Session, step: Step, hints: list[GeneratedHint]) -> None:
-    """Write a hint pathway. The last entry states the answer, and each one
-    depends on the previous so OATutor reveals them in order.
-
-    `solution` is ours, not OATutor's: its renderer only knows `hint` and
-    `scaffold`, so the exporter has to map it back down.
-    """
     for position, hint in enumerate(hints):
         session.add(
             HintEntry(
@@ -171,8 +166,16 @@ def persist_draft(
     return problem
 
 
-# Cleared before each write so a regenerated step cannot inherit them.
 TYPE_SPECIFIC_COLUMNS = {"choices": None, "num_rows": None, "num_cols": None}
+
+
+def mark_later_steps_stale(session: Session, step: Step) -> None:
+    later = session.exec(
+        select(Step).where(Step.problem_id == step.problem_id, Step.order_index > step.order_index)
+    ).all()
+    for other in later:
+        other.stale = True
+        session.add(other)
 
 
 def replace_step(
@@ -183,6 +186,8 @@ def replace_step(
     ).items():
         setattr(step, column, value)
     session.add(step)
+    step.stale = False
+    mark_later_steps_stale(session, step)
 
     for hint in list(step.hints):
         session.delete(hint)
