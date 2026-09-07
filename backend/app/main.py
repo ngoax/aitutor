@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 
 from app.api.routes import (
+    context,
     drafts,
     export,
     generation,
@@ -69,6 +70,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router, prefix="/api")
     app.include_router(projects.router, prefix="/api")
+    app.include_router(context.router, prefix="/api")
     app.include_router(problems.router, prefix="/api")
     app.include_router(steps.router, prefix="/api")
     app.include_router(hints.router, prefix="/api")

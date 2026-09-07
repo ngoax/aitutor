@@ -1,8 +1,6 @@
 """Assemble the Context Summary the teacher confirms before anything is generated."""
 
-from pydantic import BaseModel
-
-from app.models import TutorContext
+from app.schemas.context import ContextInput, SummarySection
 
 PLACEMENT_LABELS: dict[str, str] = {
     "introduction": "introduction to a new topic",
@@ -39,16 +37,11 @@ FEEDBACK_LABELS: dict[str, str] = {
 }
 
 
-class SummarySection(BaseModel):
-    heading: str
-    body: str
-
-
 def _join(values: list[str], labels: dict[str, str]) -> str:
     return ", ".join(labels.get(value, value) for value in values)
 
 
-def build_summary(context: TutorContext) -> list[SummarySection]:
+def build_summary(context: ContextInput) -> list[SummarySection]:
     """The confirmable summary. Sections the teacher left empty are left out
     rather than shown blank, so what appears is what they actually decided."""
     constraints = [
@@ -108,6 +101,6 @@ def build_summary(context: TutorContext) -> list[SummarySection]:
     return [SummarySection(heading=h, body=b) for h, b in candidates if b.strip()]
 
 
-def summary_text(context: TutorContext) -> str:
+def summary_text(context: ContextInput) -> str:
     """The same summary as one block, which is what reaches the prompt."""
     return "\n".join(f"{s.heading}: {s.body}" for s in build_summary(context))

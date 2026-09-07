@@ -3,15 +3,8 @@
 from pydantic import BaseModel
 
 from app.models import FeedbackMode, KnowledgeType, ProblemType, TutorScope
+from app.schemas.context import ContextInput, Derivation
 from app.schemas.generation import GenerationRequest
-
-
-class Derivation(BaseModel):
-    """One parameter the context decided and why."""
-
-    field: str
-    value: object
-    reason: str
 
 
 class KnowledgePattern(BaseModel):
@@ -65,7 +58,7 @@ SCOPE_SLOTS: dict[TutorScope, int] = {
 }
 
 
-def derive_request(context) -> tuple[GenerationRequest, list[Derivation]]:
+def derive_request(context: ContextInput) -> tuple[GenerationRequest, list[Derivation]]:
     """The parameters this context implies, each with the reason shown to the teacher"""
     pattern = KNOWLEDGE_PATTERNS[context.knowledge_type]
     derivations = [
@@ -104,7 +97,7 @@ def derive_request(context) -> tuple[GenerationRequest, list[Derivation]]:
     return request, derivations
 
 
-def derive_slots(context) -> tuple[int, Derivation]:
+def derive_slots(context: ContextInput) -> tuple[int, Derivation]:
     """How many task slots the tutor should have."""
     slots = SCOPE_SLOTS[context.scope]
     return slots, Derivation(

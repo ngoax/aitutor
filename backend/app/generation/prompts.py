@@ -141,3 +141,28 @@ HINT_PROMPT = ChatPromptTemplate.from_messages(
         ("human", HINT_HUMAN),
     ]
 )
+
+
+
+GOAL_CRITIQUE_RUBRIC = ""
+
+GOAL_CRITIQUE_SYSTEM = (
+    "You help a teacher sharpen a learning goal before any tutoring content is "
+    "written. Judge only what they wrote. Do not invent context they did not give, "
+    "and do not write the goal for them.\n\n"
+    "{rubric}"
+)
+
+GOAL_CRITIQUE_HUMAN = (
+    "Knowledge type the teacher selected: {knowledge_type}\n"
+    "Their learning goal: {learning_goal}\n\n"
+    "What learners already know: {prior_knowledge}\n"
+    "Difficulties they expect: {known_difficulties}"
+)
+
+GOAL_CRITIQUE_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", GOAL_CRITIQUE_SYSTEM),
+        ("human", GOAL_CRITIQUE_HUMAN),
+    ]
+)

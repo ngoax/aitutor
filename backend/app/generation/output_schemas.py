@@ -313,3 +313,22 @@ class GeneratedScaffoldPathway(GeneratedHintPathway):
     hints: list[GeneratedHint | GeneratedTextBoxScaffold | GeneratedChoiceScaffold] = Field(
         min_length=1, description=PATHWAY_DESCRIPTION + SCAFFOLD_DESCRIPTION
     )
+
+
+class GoalCritique(BaseModel):
+    """The model's read on a teacher's learning goal."""
+
+    is_observable: bool = Field(
+        description="Whether the goal names something a student could be seen to do."
+    )
+    matches_knowledge_type: bool = Field(
+        description="Whether the goal matches the knowledge type the teacher selected."
+    )
+    comment: str = Field(
+        description="What the teacher should reconsider, in one or two sentences. "
+        "Address them directly. Do not rewrite the goal here."
+    )
+    suggestion: str | None = Field(
+        default=None,
+        description="A sharper wording of the same goal, or null if it is already clear.",
+    )

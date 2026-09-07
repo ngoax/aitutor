@@ -13,8 +13,11 @@ from app.generation.output_schemas import (
     GeneratedScaffoldPathway,
     GeneratedStep,
     GeneratedTextBoxStep,
+    GoalCritique,
 )
 from app.generation.prompts import (
+    GOAL_CRITIQUE_PROMPT,
+    GOAL_CRITIQUE_RUBRIC,
     HINT_PROMPT,
     PROBLEM_PROMPT,
     RETRY_HUMAN,
@@ -134,5 +137,27 @@ def generate_step(
             "num_steps": num_steps,
         },
         schema,
+        config,
+    )
+
+
+def critique_learning_goal(
+    learning_goal: str,
+    knowledge_type: str,
+    prior_knowledge: str = "",
+    known_difficulties: str = "",
+    config: ProviderConfig | None = None,
+) -> GoalCritique:
+    """The only model call in the contextualization phase."""
+    return _generate(
+        GOAL_CRITIQUE_PROMPT,
+        {
+            "rubric": GOAL_CRITIQUE_RUBRIC,
+            "learning_goal": learning_goal,
+            "knowledge_type": knowledge_type,
+            "prior_knowledge": prior_knowledge or "not stated",
+            "known_difficulties": known_difficulties or "not stated",
+        },
+        GoalCritique,
         config,
     )

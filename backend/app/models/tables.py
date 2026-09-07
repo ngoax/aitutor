@@ -123,7 +123,7 @@ class TutorContext(SQLModel, table=True):
 
 
 class GenerationRun(SQLModel, table=True):
-    """One generation producing several alternatives per task slot """
+    """One generation producing several alternatives per task slot"""
 
     id: int | None = Field(default=None, primary_key=True)
     project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")
