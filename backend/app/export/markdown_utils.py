@@ -36,7 +36,9 @@ def dollar_wrapped(values: list[str]) -> list[str]:
     $$ is not stripped, so the delimiters become part of what they must enter"""
     return [value for value in values if "$$" in value]
 
+
 MATRIX_ENVIRONMENT = "bmatrix"
+
 
 def matrix_latex(rows: list[list[str]]) -> str:
     """Rows as the LaTeX matrix OATutor reads, one row per list"""

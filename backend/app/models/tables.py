@@ -8,9 +8,14 @@ from app.models.enums import (
     AnswerType,
     AnswerValidator,
     DraftStatus,
+    FeedbackMode,
     HintType,
     IngestionStatus,
+    KnowledgeType,
     ProblemType,
+    RunStatus,
+    StudyCondition,
+    TutorScope,
 )
 
 
@@ -34,8 +39,16 @@ class Project(SQLModel, table=True):
     chat_model: str | None = None
     embedding_provider: str | None = None
     embedding_model: str | None = None
+    # Which phases of the study this participant runs.
+    study_condition: StudyCondition = StudyCondition.CONTEXT_REVIEW
     created_at: datetime = Field(default_factory=_now)
 
+    tutor_context: "TutorContext" = Relationship(
+        back_populates="project",
+        cascade_delete=True,
+        sa_relationship_kwargs={"uselist": False},
+    )
+    runs: list["GenerationRun"] = Relationship(back_populates="project", cascade_delete=True)
     documents: list["SourceDocument"] = Relationship(back_populates="project", cascade_delete=True)
     problems: list["Problem"] = Relationship(back_populates="project", cascade_delete=True)
     lesson_plans: list["LessonPlan"] = Relationship(back_populates="project", cascade_delete=True)
@@ -72,6 +85,60 @@ class LessonPlan(SQLModel, table=True):
     problems: list["Problem"] = Relationship(back_populates="lesson_plan")
 
 
+class TutorContext(SQLModel, table=True):
+    """What the teacher decides before anything is generated"""
+
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="project.id", ondelete="CASCADE", unique=True)
+
+    # Core decisions
+    curricular_placement: list[str] = _json_column(list)
+    prior_knowledge: str = ""
+    known_difficulties: str = ""
+    knowledge_type: KnowledgeType = KnowledgeType.RULE
+    learning_goal: str = ""
+    tutor_roles: list[str] = _json_column(list)
+    feedback_mode: FeedbackMode = FeedbackMode.CORRECTIVE
+    scope: TutorScope = TutorScope.PARTIAL
+
+    # Optional deepening (skippable)
+    instructional_history: str = ""
+    representations: str = ""
+    terminology: str = ""
+    heterogeneity: str = ""
+    teacher_intents: list[str] = _json_column(list)
+    teacher_intent_note: str = ""
+    duration_minutes: int | None = None
+    location: str = ""
+    group_work: str = ""
+
+    # Model's response to the learning goal
+    goal_critique: dict[str, Any] = _json_column(dict)
+    # Set when the teacher accepts the assembled summary.
+    confirmed_at: datetime | None = None
+    created_at: datetime = Field(default_factory=_now)
+    updated_at: datetime = Field(default_factory=_now)
+
+    project: Project = Relationship(back_populates="tutor_context")
+
+
+class GenerationRun(SQLModel, table=True):
+    """One generation producing several alternatives per task slot """
+
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")
+    context_snapshot: dict[str, Any] = _json_column(dict)
+    request_snapshot: dict[str, Any] = _json_column(dict)
+    num_slots: int = 1
+    num_alternatives: int = 3
+    status: RunStatus = RunStatus.GENERATING
+    error: str | None = None
+    created_at: datetime = Field(default_factory=_now)
+
+    project: Project = Relationship(back_populates="runs")
+    problems: list["Problem"] = Relationship(back_populates="run")
+
+
 class Problem(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")
@@ -91,8 +158,13 @@ class Problem(SQLModel, table=True):
     generation_request: dict[str, Any] = _json_column(dict)
     # Chunk ids that grounded this generation for display of sources
     source_chunk_ids: list[str] = _json_column(list)
+    run_id: int | None = Field(default=None, foreign_key="generationrun.id", ondelete="SET NULL")
+    # Which candidate this is within its slot; alternatives share a slot.
+    slot_index: int = 0
+    alternative_index: int = 0
     created_at: datetime = Field(default_factory=_now)
 
+    run: GenerationRun | None = Relationship(back_populates="problems")
     project: Project = Relationship(back_populates="problems")
     lesson_plan: LessonPlan | None = Relationship(back_populates="problems")
     steps: list["Step"] = Relationship(back_populates="problem", cascade_delete=True)

@@ -39,3 +39,47 @@ class DraftStatus(StrEnum):
     DRAFT = "draft"
     EDITED = "edited"
     EXPORT_READY = "export_ready"
+
+
+class StudyCondition(StrEnum):
+    """Which phases of the study a participant runs."""
+
+    CONTROL = "control"
+    CONTEXT = "context"
+    REVIEW = "review"
+    CONTEXT_REVIEW = "context_review"
+
+    @property
+    def has_context(self) -> bool:
+        return self in (StudyCondition.CONTEXT, StudyCondition.CONTEXT_REVIEW)
+
+    @property
+    def has_review(self) -> bool:
+        return self in (StudyCondition.REVIEW, StudyCondition.CONTEXT_REVIEW)
+
+
+class KnowledgeType(StrEnum):
+    """KLI knowledge components. Decides which instructional pattern fits."""
+
+    FACT = "fact"
+    RULE = "rule"
+    PRINCIPLE = "principle"
+
+
+class FeedbackMode(StrEnum):
+    CORRECTIVE = "corrective"
+    IMPLICIT = "implicit"
+
+
+class TutorScope(StrEnum):
+    """How much of a learning unit the tutor covers, which sets the task count."""
+
+    ADDITION = "addition"
+    PARTIAL = "partial"
+    FULL = "full"
+
+
+class RunStatus(StrEnum):
+    GENERATING = "generating"
+    READY = "ready"
+    FAILED = "failed"
