@@ -1,6 +1,30 @@
 import { useState } from "react";
 import { api } from "../../api/client";
-import type { Project } from "../../api/types";
+import type { Project, ProjectUpdate } from "../../api/types";
+import { Select } from "../Select";
+
+const CONDITIONS = [
+  {
+    value: "context_review",
+    label: "Context + Review",
+    description: "Contextualization, generation, and critical review.",
+  },
+  {
+    value: "context",
+    label: "Context only",
+    description: "Contextualization and generation.",
+  },
+  {
+    value: "review",
+    label: "Review only",
+    description: "Generation and critical review.",
+  },
+  {
+    value: "control",
+    label: "Control",
+    description: "Generation alone, with neither phase.",
+  },
+];
 
 type Props = {
   projects: Project[];
@@ -8,9 +32,18 @@ type Props = {
   onSelect: (id: number) => void;
   onCreated: () => void;
   onDeleted: (id: number) => void;
+  onProjectChange: (patch: ProjectUpdate) => void;
 };
 
-export function ProjectStep({ projects, selectedId, onSelect, onCreated, onDeleted }: Props) {
+export function ProjectStep({
+  projects,
+  selectedId,
+  onSelect,
+  onCreated,
+  onDeleted,
+  onProjectChange,
+}: Props) {
+  const selected = projects.find((project) => project.id === selectedId) ?? null;
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -120,6 +153,21 @@ export function ProjectStep({ projects, selectedId, onSelect, onCreated, onDelet
               </div>
             ))}
           </div>
+        </>
+      )}
+
+      {selected && (
+        <>
+          <div className="divider" />
+          <Select
+            label="Study condition"
+            value={selected.study_condition}
+            options={CONDITIONS}
+            onChange={(value) => onProjectChange({ study_condition: value as never })}
+          />
+          <p className="field-hint">
+            Decides which phases this participant works through, and so which steps appear above.
+          </p>
         </>
       )}
     </div>

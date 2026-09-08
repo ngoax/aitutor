@@ -8,7 +8,7 @@ import { TextArea } from "../TextArea";
 
 type Props = {
   projectId: number;
-  onConfirmedChange: (confirmed: boolean) => void;
+  onSummary: (summary: ContextSummary) => void;
 };
 
 const PLACEMENTS = [
@@ -105,7 +105,7 @@ function Critique({ critique }: { critique: GoalCritique }) {
   );
 }
 
-export function ContextStep({ projectId, onConfirmedChange }: Props) {
+export function ContextStep({ projectId, onSummary }: Props) {
   const [context, setContext] = useState<TutorContext | null>(null);
   const [summary, setSummary] = useState<ContextSummary | null>(null);
   const [deeper, setDeeper] = useState(false);
@@ -120,11 +120,11 @@ export function ContextStep({ projectId, onConfirmedChange }: Props) {
       ]);
       setContext(loaded);
       setSummary(computed);
-      onConfirmedChange(loaded.confirmed_at !== null);
+      onSummary(computed);
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [projectId, onConfirmedChange]);
+  }, [projectId, onSummary]);
 
   useEffect(() => {
     load();
@@ -134,8 +134,9 @@ export function ContextStep({ projectId, onConfirmedChange }: Props) {
     setError(null);
     try {
       setContext(await api.updateContext(projectId, patch));
-      setSummary(await api.contextSummary(projectId));
-      onConfirmedChange(false);
+      const computed = await api.contextSummary(projectId);
+      setSummary(computed);
+      onSummary(computed);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -147,8 +148,9 @@ export function ContextStep({ projectId, onConfirmedChange }: Props) {
     try {
       const updated = await action();
       setContext(updated);
-      setSummary(await api.contextSummary(projectId));
-      onConfirmedChange(updated.confirmed_at !== null);
+      const computed = await api.contextSummary(projectId);
+      setSummary(computed);
+      onSummary(computed);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -213,14 +215,18 @@ export function ContextStep({ projectId, onConfirmedChange }: Props) {
         placeholder="Learners can factor a quadratic with a non-unit leading coefficient"
         onSave={(learning_goal) => save({ learning_goal })}
       />
-      <button
-        className="btn btn-ghost"
-        disabled={busy || !context.learning_goal}
-        onClick={() => run(() => api.critiqueGoal(projectId))}
-      >
-        {busy ? "Reading…" : critique ? "Ask again" : "Ask for a second opinion"}
-      </button>
-      {critique && <Critique critique={critique as GoalCritique} />}
+      {summary?.critique_enabled && (
+        <>
+          <button
+            className="btn btn-ghost"
+            disabled={busy || !context.learning_goal}
+            onClick={() => run(() => api.critiqueGoal(projectId))}
+          >
+            {busy ? "Reading…" : critique ? "Ask again" : "Ask for a second opinion"}
+          </button>
+          {critique && <Critique critique={critique as GoalCritique} />}
+        </>
+      )}
 
       <div className="divider" />
 

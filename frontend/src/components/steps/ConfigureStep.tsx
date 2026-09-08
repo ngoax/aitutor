@@ -15,6 +15,7 @@ import { Toggle } from "../Toggle";
 
 type Props = {
   summary: ContextSummary | null;
+  derived: boolean;
   request: GenerationRequest;
   onChange: <K extends keyof GenerationRequest>(key: K, value: GenerationRequest[K]) => void;
   options: WizardOptions | null;
@@ -26,6 +27,7 @@ type Props = {
 
 export function ConfigureStep({
   summary,
+  derived,
   request,
   onChange,
   options,
@@ -71,18 +73,29 @@ export function ConfigureStep({
         </div>
       )}
 
-      <label className="field-block">
-        <span className="select-label">What should it be about?</span>
-        <input
-          className="text-input"
-          value={request.topic}
-          onChange={(event) => onChange("topic", event.target.value)}
-          placeholder="factoring quadratic expressions"
-        />
-        <p className="field-hint">
-          Also used to search your materials, so be specific about the concept.
-        </p>
-      </label>
+      {derived ? (
+        <div className="field-block">
+          <span className="select-label">What it is about</span>
+          <p className="derived-topic">{request.topic}</p>
+          <p className="field-hint">
+            Your learning goal, which is also the query used to search your materials.
+            Edit it in the Context step.
+          </p>
+        </div>
+      ) : (
+        <label className="field-block">
+          <span className="select-label">What should it be about?</span>
+          <input
+            className="text-input"
+            value={request.topic}
+            onChange={(event) => onChange("topic", event.target.value)}
+            placeholder="factoring quadratic expressions"
+          />
+          <p className="field-hint">
+            Also used to search your materials, so be specific about the concept.
+          </p>
+        </label>
+      )}
 
       <div className="grid-2">
         <Select

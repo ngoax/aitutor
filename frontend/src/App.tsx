@@ -51,7 +51,6 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
-  const [contextConfirmed, setContextConfirmed] = useState(false);
   const [summary, setSummary] = useState<ContextSummary | null>(null);
 
   const loadProjects = useCallback(() => {
@@ -89,10 +88,7 @@ export default function App() {
     if (selectedId === null) return setSummary(null);
     api
       .contextSummary(selectedId)
-      .then((loaded) => {
-        setSummary(loaded);
-        setContextConfirmed(loaded.confirmed);
-      })
+      .then(setSummary)
       .catch(() => setSummary(null));
   }, [selectedId]);
 
@@ -137,6 +133,15 @@ export default function App() {
     return () => clearInterval(timer);
   }, [documents, loadDocuments]);
 
+  // Only where a Context step supplies it. In the control condition the teacher
+  // types the topic themselves, and seeding would overwrite what they wrote.
+  useEffect(() => {
+    if (selectedId === null || summary === null) return;
+    const condition = projects.find((p) => p.id === selectedId)?.study_condition;
+    if (!stepsFor(condition).includes("Context")) return;
+    setRequest((previous) => ({ ...previous, topic: summary.request.topic }));
+  }, [projects, selectedId, summary]);
+
   function update<K extends keyof GenerationRequest>(key: K, value: GenerationRequest[K]) {
     setRequest((previous) => ({ ...previous, [key]: value }));
   }
@@ -158,11 +163,12 @@ export default function App() {
   const indexedCount = documents.filter((doc) => doc.status === "indexed").length;
   const project = projects.find((p) => p.id === selectedId) ?? null;
   const steps = stepsFor(project?.study_condition);
+  const derivesTopic = steps.includes("Context");
 
   const gates: Record<string, boolean> = {
     Project: selectedId !== null,
     Materials: indexedCount > 0,
-    Context: contextConfirmed,
+    Context: summary?.confirmed ?? false,
     Configure: request.topic.trim().length >= 3,
     Generate: draft !== null && draft.status !== "generating",
     Export: false,
@@ -222,11 +228,12 @@ export default function App() {
             />
           )}
           {steps[step] === "Context" && selectedId !== null && (
-            <ContextStep projectId={selectedId} onConfirmedChange={setContextConfirmed} />
+            <ContextStep projectId={selectedId} onSummary={setSummary} />
           )}
           {steps[step] === "Configure" && (
             <ConfigureStep
               summary={summary}
+              derived={derivesTopic}
               request={request}
               onChange={update}
               options={options}

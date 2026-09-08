@@ -4,6 +4,7 @@ import type { GenerationRequest, ProblemDraft } from "../../api/types";
 import { AnswerEditor } from "../AnswerEditor";
 import { AnswerTypeToggle } from "../AnswerTypeToggle";
 import { EditableText } from "../EditableText";
+import { ProgressBar } from "../ProgressBar";
 
 type Props = {
   projectId: number;
@@ -14,6 +15,16 @@ type Props = {
   onGenerate: () => void;
   onSaved: () => void;
 };
+
+function progressLabels(request: GenerationRequest): string[] {
+  const labels = ["Writing the problem"];
+  for (let n = 1; n <= request.num_steps; n += 1) {
+    labels.push(`Writing step ${n} of ${request.num_steps}`);
+    if (request.num_hints > 0) labels.push(`Writing hints for step ${n}`);
+  }
+  labels.push("Saving the draft");
+  return labels;
+}
 
 export function GenerateStep({
   projectId,
@@ -79,9 +90,14 @@ export function GenerateStep({
       </button>
 
       {generating && (
-        <p className="field-hint">
-          <span className="spinner" /> Tasks are being generated. You can leave this page and come back.
-        </p>
+        <>
+          <ProgressBar
+            done={draft?.progress_done ?? 0}
+            total={draft?.progress_total ?? 0}
+            labels={progressLabels(request)}
+          />
+          <p className="field-hint">You can leave this page and come back.</p>
+        </>
       )}
 
       {error && <p className="error">{error}</p>}

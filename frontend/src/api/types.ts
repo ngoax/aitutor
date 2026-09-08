@@ -66,9 +66,11 @@ export type Derivation = { field: string; value: unknown; reason: string };
 export type ContextSummary = {
   sections: SummarySection[];
   derivations: Derivation[];
+  request: GenerationRequest;
   num_slots: number;
   complete: boolean;
   confirmed: boolean;
+  critique_enabled: boolean;
   missing: string[];
 };
 
@@ -184,6 +186,8 @@ export type ProblemDraft = {
   difficulty: string | null;
   status: DraftStatus;
   error: string | null;
+  progress_done: number;
+  progress_total: number;
   created_at: string;
   steps: StepDraft[];
 };
