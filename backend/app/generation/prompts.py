@@ -29,6 +29,20 @@ def format_steps(steps: list[GeneratedStep]) -> str:
     return "\n\n".join(context)
 
 
+def format_avoid(written: list[str]) -> str:
+    """Ensures the clause makes the next alternative differ from the ones before it"""
+    if not written:
+        return ""
+    listed = "\n".join(f"- {body}" for body in written)
+    return (
+        "\n\nYou have already written these problems for this same slot:\n"
+        f"{listed}\n\n"
+        "Write one that is genuinely different, not a rewording. Change the values and "
+        "the setup, so a student who worked through the problems above could not reuse "
+        "their answers here. Stay on the same topic and difficulty."
+    )
+
+
 SYSTEM = (
     "You write practice problems for OATutor, an adaptive tutoring system used in "
     "school and university courses.\n\n"
@@ -61,6 +75,7 @@ PROBLEM_HUMAN = (
     "Topic: {topic}\n"
     "Difficulty: {difficulty}\n\n"
     "Write one problem on this topic, grounded in the course material above."
+    "{avoid}"
 )
 
 PROBLEM_PROMPT = ChatPromptTemplate.from_messages(

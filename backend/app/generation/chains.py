@@ -23,6 +23,7 @@ from app.generation.prompts import (
     RETRY_HUMAN,
     SCAFFOLD_GUIDANCE,
     STEP_PROMPT,
+    format_avoid,
     format_context,
     format_steps,
 )
@@ -70,11 +71,20 @@ def _generate(
 
 
 def generate_problem(
-    topic: str, difficulty: str, docs: list[Document], config: ProviderConfig | None = None
+    topic: str,
+    difficulty: str,
+    docs: list[Document],
+    config: ProviderConfig | None = None,
+    avoid: list[str] | None = None,
 ) -> GeneratedProblem:
     return _generate(
         PROBLEM_PROMPT,
-        {"topic": topic, "difficulty": difficulty, "context": format_context(docs)},
+        {
+            "topic": topic,
+            "difficulty": difficulty,
+            "context": format_context(docs),
+            "avoid": format_avoid(avoid or []),
+        },
         GeneratedProblem,
         config,
     )

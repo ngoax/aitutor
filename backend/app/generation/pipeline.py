@@ -21,6 +21,7 @@ def generate_draft(
     request: GenerationRequest,
     project_id: int,
     config: ProviderConfig | None = None,
+    avoid: list[str] | None = None,
 ) -> GeneratedDraft:
     docs = retrieve(
         project_id=project_id,
@@ -33,6 +34,7 @@ def generate_draft(
         difficulty=request.difficulty,
         docs=docs,
         config=config,
+        avoid=avoid,
     )
 
     previous: list[GeneratedStep] = []
@@ -103,3 +105,23 @@ def regenerate_step(
             use_scaffolds=request.use_scaffolds,
         )
     return DraftStep(step=step, hints=hints)
+
+
+def generate_alternatives(
+    request: GenerationRequest,
+    project_id: int,
+    count: int,
+    config: ProviderConfig | None = None,
+) -> list[GeneratedDraft]:
+
+    drafts: list[GeneratedDraft] = []
+    for _ in range(count):
+        drafts.append(
+            generate_draft(
+                request,
+                project_id=project_id,
+                config=config,
+                avoid=[draft.problem.body for draft in drafts],
+            )
+        )
+    return drafts
