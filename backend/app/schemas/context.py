@@ -82,4 +82,5 @@ class ContextSummaryRead(BaseModel):
     derivations: list[Derivation]
     num_slots: int
     complete: bool
+    confirmed: bool
     missing: list[str]

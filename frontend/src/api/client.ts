@@ -1,5 +1,7 @@
 import type {
+  ContextSummary,
   ExportResult,
+  GenerationRun,
   GenerationRequest,
   HintUpdate,
   ProblemDraft,
@@ -8,8 +10,11 @@ import type {
   ProjectUpdate,
   ProviderInfo,
   RetrievedChunk,
+  RunDetail,
   SourceDocument,
   StepUpdate,
+  TutorContext,
+  TutorContextUpdate,
   WizardOptions,
 } from "./types";
 
@@ -103,6 +108,28 @@ export const api = {
       `/projects/${projectId}/problems/${problemId}/steps/${stepId}/regenerate`,
       { method: "POST" },
     ),
+
+  getContext: (projectId: number) => request<TutorContext>(`/projects/${projectId}/context`),
+  updateContext: (projectId: number, patch: TutorContextUpdate) =>
+    request<TutorContext>(`/projects/${projectId}/context`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  contextSummary: (projectId: number) =>
+    request<ContextSummary>(`/projects/${projectId}/context/summary`),
+  confirmContext: (projectId: number) =>
+    request<TutorContext>(`/projects/${projectId}/context/confirm`, { method: "POST" }),
+  critiqueGoal: (projectId: number) =>
+    request<TutorContext>(`/projects/${projectId}/context/critique`, { method: "POST" }),
+
+  startRun: (projectId: number, numAlternatives: number) =>
+    request<GenerationRun>(`/projects/${projectId}/runs`, {
+      method: "POST",
+      body: JSON.stringify({ num_alternatives: numAlternatives }),
+    }),
+  listRuns: (projectId: number) => request<GenerationRun[]>(`/projects/${projectId}/runs`),
+  getRun: (projectId: number, runId: number) =>
+    request<RunDetail>(`/projects/${projectId}/runs/${runId}`),
 
   exportProject: (projectId: number) =>
     request<ExportResult>(`/projects/${projectId}/export`, { method: "POST" }),

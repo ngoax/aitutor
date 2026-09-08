@@ -1,5 +1,6 @@
 import type {
   ChoiceOption,
+  ContextSummary,
   GenerationRequest,
   Project,
   ProjectUpdate,
@@ -13,6 +14,7 @@ import { Select } from "../Select";
 import { Toggle } from "../Toggle";
 
 type Props = {
+  summary: ContextSummary | null;
   request: GenerationRequest;
   onChange: <K extends keyof GenerationRequest>(key: K, value: GenerationRequest[K]) => void;
   options: WizardOptions | null;
@@ -23,6 +25,7 @@ type Props = {
 };
 
 export function ConfigureStep({
+  summary,
   request,
   onChange,
   options,
@@ -48,6 +51,25 @@ export function ConfigureStep({
       <p className="lede">
         These choices become the prompt. You can edit everything the model produces afterwards.
       </p>
+
+      {summary && summary.derivations.length > 0 && (
+        <div className="derived">
+          <h3>What your context already decided</h3>
+          <ul className="derived-list">
+            {summary.derivations.map((derivation) => (
+              <li key={derivation.field}>
+                <span className="derived-field">
+                  {derivation.field.replace(/_/g, " ")} = <b>{String(derivation.value)}</b>
+                </span>
+                <span className="derived-reason">{derivation.reason}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="field-hint">
+            Change anything below if you disagree. The reason is there so you can.
+          </p>
+        </div>
+      )}
 
       <label className="field-block">
         <span className="select-label">What should it be about?</span>

@@ -77,6 +77,7 @@ def get_summary(project_id: int, session: SessionDep) -> ContextSummaryRead:
         derivations=[*derivations, slot_derivation],
         num_slots=slots,
         complete=not _missing(context),
+        confirmed=context.confirmed_at is not None,
         missing=_missing(context),
     )
 

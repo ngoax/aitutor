@@ -4,21 +4,29 @@ import type {
   GenerationRequest,
   Project,
   ProjectUpdate,
+  ContextSummary,
   ProviderInfo,
   ProblemDraft,
+  StudyCondition,
   SourceDocument,
   WizardOptions,
 } from "./api/types";
 import ethLogoBlack from "./assets/ethz_logo_black.svg";
 import { Stepper } from "./components/Stepper";
 import { ConfigureStep } from "./components/steps/ConfigureStep";
+import { ContextStep } from "./components/steps/ContextStep";
 import { ExportStep } from "./components/steps/ExportStep";
 import { GenerateStep } from "./components/steps/GenerateStep";
 import { MaterialsStep } from "./components/steps/MaterialsStep";
 import { ProjectStep } from "./components/steps/ProjectStep";
 import "./App.css";
 
-const STEPS = ["Project", "Materials", "Configure", "Generate", "Export"];
+const BASE_STEPS = ["Project", "Materials", "Configure", "Generate", "Export"];
+
+function stepsFor(condition: StudyCondition | undefined): string[] {
+  const withContext = condition === "context" || condition === "context_review";
+  return withContext ? ["Project", "Materials", "Context", ...BASE_STEPS.slice(2)] : BASE_STEPS;
+}
 
 const INITIAL_REQUEST: GenerationRequest = {
   topic: "",
@@ -43,6 +51,8 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
+  const [contextConfirmed, setContextConfirmed] = useState(false);
+  const [summary, setSummary] = useState<ContextSummary | null>(null);
 
   const loadProjects = useCallback(() => {
     api.listProjects().then(setProjects).catch((e: Error) => setOffline(e.message));
@@ -74,6 +84,17 @@ export default function App() {
   }, [loadProjects]);
 
   useEffect(loadDocuments, [loadDocuments]);
+
+  useEffect(() => {
+    if (selectedId === null) return setSummary(null);
+    api
+      .contextSummary(selectedId)
+      .then((loaded) => {
+        setSummary(loaded);
+        setContextConfirmed(loaded.confirmed);
+      })
+      .catch(() => setSummary(null));
+  }, [selectedId]);
 
   const patchProject = useCallback(
     async (patch: ProjectUpdate) => {
@@ -135,25 +156,20 @@ export default function App() {
   }
 
   const indexedCount = documents.filter((doc) => doc.status === "indexed").length;
-  const canAdvance = [
-    selectedId !== null,
-    indexedCount > 0,
-    request.topic.trim().length >= 3,
-    draft !== null && draft.status !== "generating",
-    false,
-  ][step];
-  const furthest =
-    selectedId === null
-      ? 0
-      : indexedCount === 0
-        ? 1
-        : !request.topic.trim()
-          ? 2
-          : draft === null
-            ? 3
-            : 4;
-
   const project = projects.find((p) => p.id === selectedId) ?? null;
+  const steps = stepsFor(project?.study_condition);
+
+  const gates: Record<string, boolean> = {
+    Project: selectedId !== null,
+    Materials: indexedCount > 0,
+    Context: contextConfirmed,
+    Configure: request.topic.trim().length >= 3,
+    Generate: draft !== null && draft.status !== "generating",
+    Export: false,
+  };
+  const canAdvance = gates[steps[step]] ?? false;
+  const blocked = steps.findIndex((name) => !gates[name]);
+  const furthest = blocked === -1 ? steps.length - 1 : blocked;
   // What generation will actually use: the project's choice, else the backend default.
   const activeProvider =
     providers.find((p) => p.provider === project?.chat_provider) ??
@@ -185,10 +201,10 @@ export default function App() {
       <main className="shell">
         {offline && <p className="error banner">Backend unreachable — {offline}</p>}
 
-        <Stepper steps={STEPS} current={step} furthest={furthest} onJump={setStep} />
+        <Stepper steps={steps} current={step} furthest={furthest} onJump={setStep} />
 
         <section className="panel" key={step}>
-          {step === 0 && (
+          {steps[step] === "Project" && (
             <ProjectStep
               projects={projects}
               selectedId={selectedId}
@@ -197,15 +213,19 @@ export default function App() {
               onDeleted={handleProjectDeleted}
             />
           )}
-          {step === 1 && selectedId !== null && (
+          {steps[step] === "Materials" && selectedId !== null && (
             <MaterialsStep
               projectId={selectedId}
               documents={documents}
               onChanged={loadDocuments}
             />
           )}
-          {step === 2 && (
+          {steps[step] === "Context" && selectedId !== null && (
+            <ContextStep projectId={selectedId} onConfirmedChange={setContextConfirmed} />
+          )}
+          {steps[step] === "Configure" && (
             <ConfigureStep
+              summary={summary}
               request={request}
               onChange={update}
               options={options}
@@ -215,7 +235,7 @@ export default function App() {
               onProjectChange={patchProject}
             />
           )}
-          {step === 3 && selectedId !== null && (
+          {steps[step] === "Generate" && selectedId !== null && (
             <GenerateStep
               projectId={selectedId}
               request={request}
@@ -227,7 +247,7 @@ export default function App() {
             />
           )}
 
-          {step === 4 && selectedId !== null && (
+          {steps[step] === "Export" && selectedId !== null && (
             <ExportStep
               projectId={selectedId}
               project={project}
@@ -243,7 +263,7 @@ export default function App() {
             >
               Back
             </button>
-            {step < STEPS.length - 1 && (
+            {step < steps.length - 1 && (
               <button
                 className="btn btn-primary"
                 onClick={() => setStep((s) => s + 1)}

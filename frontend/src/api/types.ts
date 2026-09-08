@@ -7,6 +7,7 @@ export type Project = {
   chat_model: string | null;
   embedding_provider: string | null;
   embedding_model: string | null;
+  study_condition: StudyCondition;
   created_at: string;
 };
 
@@ -17,7 +18,77 @@ export type ProjectUpdate = Partial<{
   chat_model: string | null;
   embedding_provider: string | null;
   embedding_model: string | null;
+  study_condition: StudyCondition;
 }>;
+
+export type StudyCondition = "control" | "context" | "review" | "context_review";
+export type KnowledgeType = "fact" | "rule" | "principle";
+export type FeedbackMode = "corrective" | "implicit";
+export type TutorScope = "addition" | "partial" | "full";
+
+export type TutorContext = {
+  id: number;
+  project_id: number;
+  curricular_placement: string[];
+  prior_knowledge: string;
+  known_difficulties: string;
+  knowledge_type: KnowledgeType;
+  learning_goal: string;
+  tutor_roles: string[];
+  feedback_mode: FeedbackMode;
+  scope: TutorScope;
+  instructional_history: string;
+  representations: string;
+  terminology: string;
+  heterogeneity: string;
+  teacher_intents: string[];
+  teacher_intent_note: string;
+  duration_minutes: number | null;
+  location: string;
+  group_work: string;
+  goal_critique: GoalCritique | Record<string, never>;
+  confirmed_at: string | null;
+};
+
+export type TutorContextUpdate = Partial<Omit<TutorContext, "id" | "project_id" | "goal_critique" | "confirmed_at">>;
+
+export type GoalCritique = {
+  is_observable: boolean;
+  matches_knowledge_type: boolean;
+  comment: string;
+  suggestion: string | null;
+};
+
+export type SummarySection = { heading: string; body: string };
+
+export type Derivation = { field: string; value: unknown; reason: string };
+
+export type ContextSummary = {
+  sections: SummarySection[];
+  derivations: Derivation[];
+  num_slots: number;
+  complete: boolean;
+  confirmed: boolean;
+  missing: string[];
+};
+
+export type RunStatus = "generating" | "ready" | "failed";
+
+export type GenerationRun = {
+  id: number;
+  project_id: number;
+  num_slots: number;
+  num_alternatives: number;
+  status: RunStatus;
+  error: string | null;
+  context_snapshot: Record<string, unknown>;
+  request_snapshot: Record<string, unknown>;
+  created_at: string;
+};
+
+export type RunSlot = { slot_index: number; alternatives: ProblemDraft[] };
+
+export type RunDetail = GenerationRun & { slots: RunSlot[] };
 
 export type IngestionStatus = "pending" | "indexed" | "failed";
 
