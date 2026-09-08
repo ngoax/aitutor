@@ -97,3 +97,17 @@ def test_derivation_survives_a_json_round_trip():
 
     assert rehydrated.feedback_mode is FeedbackMode.IMPLICIT
     assert derive_request(rehydrated)[0].use_scaffolds is False
+
+
+def test_the_project_reports_its_study_condition(client):
+    """The wizard picks its steps from this"""
+    project = client.get("/api/projects/1").json()
+
+    assert project["study_condition"] == "context_review"
+
+
+def test_the_condition_can_be_reassigned(client):
+    """Participants are assigned a condition; the tool has to be able to set it."""
+    updated = client.patch("/api/projects/1", json={"study_condition": "control"}).json()
+
+    assert updated["study_condition"] == "control"

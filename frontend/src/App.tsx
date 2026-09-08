@@ -211,6 +211,7 @@ export default function App() {
               onSelect={setSelectedId}
               onCreated={loadProjects}
               onDeleted={handleProjectDeleted}
+              onProjectChange={patchProject}
             />
           )}
           {steps[step] === "Materials" && selectedId !== null && (

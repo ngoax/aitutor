@@ -70,16 +70,25 @@ const SCOPES = [
 ];
 
 function Critique({ critique }: { critique: GoalCritique }) {
+
   const flags = [
-    { ok: critique.is_observable, text: "names something you could observe" },
-    { ok: critique.matches_knowledge_type, text: "matches the knowledge type you chose" },
+    {
+      ok: critique.is_observable,
+      yes: "names something you could observe",
+      no: "does not name something you could observe",
+    },
+    {
+      ok: critique.matches_knowledge_type,
+      yes: "matches the knowledge type you chose",
+      no: "does not match the knowledge type you chose",
+    },
   ];
   return (
     <div className="critique">
       <ul className="critique-flags">
         {flags.map((flag) => (
-          <li key={flag.text} className={flag.ok ? "is-ok" : "is-warn"}>
-            {flag.ok ? "✓" : "!"} {flag.text}
+          <li key={flag.yes} className={flag.ok ? "is-ok" : "is-warn"}>
+            {flag.ok ? "✓" : "!"} {flag.ok ? flag.yes : flag.no}
           </li>
         ))}
       </ul>
@@ -329,13 +338,19 @@ export function ContextStep({ projectId, onConfirmedChange }: Props) {
             <p className="field-hint warn">Still to answer: {summary.missing.join(", ")}.</p>
           )}
 
-          <button
-            className="btn btn-primary btn-lg"
-            disabled={busy || !summary.complete}
-            onClick={() => run(() => api.confirmContext(projectId))}
-          >
-            {context.confirmed_at ? "Confirmed" : "This is my context"}
-          </button>
+          {context.confirmed_at ? (
+            <p className="confirmed-note">
+              ✓ Confirmed. Editing anything above will ask you to confirm again.
+            </p>
+          ) : (
+            <button
+              className="btn btn-primary btn-lg"
+              disabled={busy || !summary.complete}
+              onClick={() => run(() => api.confirmContext(projectId))}
+            >
+              This is my context
+            </button>
+          )}
         </>
       )}
     </div>

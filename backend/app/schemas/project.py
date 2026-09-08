@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.llm.provider_config import ChatProvider
+from app.models import StudyCondition
 
 
 class ProjectCreate(BaseModel):
@@ -21,6 +22,7 @@ class ProjectUpdate(BaseModel):
     chat_model: str | None = None
     embedding_provider: str | None = None
     embedding_model: str | None = None
+    study_condition: StudyCondition | None = None
 
 
 class ProjectRead(BaseModel):
@@ -35,4 +37,5 @@ class ProjectRead(BaseModel):
     chat_model: str | None = None
     embedding_provider: str | None = None
     embedding_model: str | None = None
+    study_condition: StudyCondition = StudyCondition.CONTEXT_REVIEW
     created_at: datetime

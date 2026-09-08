@@ -1195,3 +1195,13 @@ textarea.text-input {
   font-size: 0.8rem;
   color: var(--muted);
 }
+
+.divider:empty {
+  gap: 0;
+}
+.confirmed-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.88rem;
+  color: var(--ok);
+  font-weight: 550;
+}
