@@ -6,6 +6,7 @@ from app.context.derivation import derive_request, derive_slots
 from app.context.summary import build_summary
 from app.core.db import SessionDep
 from app.generation.chains import critique_learning_goal
+from app.generation.prompts import GOAL_CRITIQUE_RUBRIC
 from app.llm.provider_config import ProviderConfig
 from app.models import Project, TutorContext
 from app.schemas.context import (
@@ -70,14 +71,16 @@ def get_summary(project_id: int, session: SessionDep) -> ContextSummaryRead:
     """The assembled summary and what it implies"""
     context = _context(session, project_id)
     reading = ContextInput.model_validate(context)
-    _, derivations = derive_request(reading)
+    request, derivations = derive_request(reading)
     slots, slot_derivation = derive_slots(reading)
     return ContextSummaryRead(
         sections=build_summary(reading),
         derivations=[*derivations, slot_derivation],
+        request=request,
         num_slots=slots,
         complete=not _missing(context),
         confirmed=context.confirmed_at is not None,
+        critique_enabled=bool(GOAL_CRITIQUE_RUBRIC.strip()),
         missing=_missing(context),
     )
 
@@ -102,6 +105,14 @@ def critique_goal(project_id: int, session: SessionDep) -> TutorContext:
     """Ask the model what is wrong with the learning goal"""
     project = _project(session, project_id)
     context = _context(session, project_id)
+    if not GOAL_CRITIQUE_RUBRIC.strip():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "No rubric has been written for this yet. Without one the model judges "
+                "the goal against its own reading of KLI."
+            ),
+        )
     if not context.learning_goal:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

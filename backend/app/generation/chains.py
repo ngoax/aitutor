@@ -26,6 +26,7 @@ from app.generation.prompts import (
     format_avoid,
     format_context,
     format_steps,
+    format_teaching_context,
 )
 from app.llm.errors import is_transient
 from app.llm.factory import get_chat_model
@@ -76,10 +77,12 @@ def generate_problem(
     docs: list[Document],
     config: ProviderConfig | None = None,
     avoid: list[str] | None = None,
+    teaching_context: str = "",
 ) -> GeneratedProblem:
     return _generate(
         PROBLEM_PROMPT,
         {
+            "teaching_context": format_teaching_context(teaching_context),
             "topic": topic,
             "difficulty": difficulty,
             "context": format_context(docs),
@@ -98,10 +101,12 @@ def generate_hints(
     docs: list[Document],
     config: ProviderConfig | None = None,
     use_scaffolds: bool = False,
+    teaching_context: str = "",
 ) -> GeneratedHintPathway:
     return _generate(
         HINT_PROMPT,
         {
+            "teaching_context": format_teaching_context(teaching_context),
             "context": format_context(docs),
             "problem_title": problem.title,
             "problem_body": problem.body,
@@ -134,11 +139,13 @@ def generate_step(
     problem_type: ProblemType,
     docs: list[Document],
     config: ProviderConfig | None = None,
+    teaching_context: str = "",
 ) -> GeneratedStep:
     schema = STEP_SCHEMAS[problem_type]
     return _generate(
         STEP_PROMPT,
         {
+            "teaching_context": format_teaching_context(teaching_context),
             "context": format_context(docs),
             "problem_title": problem_title,
             "problem_body": problem_body,

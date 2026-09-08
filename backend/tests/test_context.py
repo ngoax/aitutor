@@ -4,6 +4,7 @@ import pytest
 
 from app.context.derivation import KNOWLEDGE_PATTERNS, derive_request, derive_slots
 from app.context.summary import build_summary, summary_text
+from app.generation.prompts import PROBLEM_PROMPT, format_teaching_context
 from app.models import FeedbackMode, KnowledgeType, TutorContext, TutorScope
 
 
@@ -85,7 +86,7 @@ def test_summary_leaves_out_what_the_teacher_skipped():
     headings = [s.heading for s in build_summary(_context())]
 
     assert "Learning goal" in headings
-    assert "Instructional continuity" not in headings
+    assert "How it has been taught" not in headings
     assert "Constraints" not in headings
 
 
@@ -98,8 +99,51 @@ def test_summary_reports_what_was_entered():
     text = summary_text(context)
 
     assert "Factor a quadratic using the ac method (rule-based knowledge)" in text
-    assert "Taught with area models" in text
-    assert "20 minutes; in class" in text
+    assert "How it has been taught: Taught with area models" in text
+    assert "20 minutes; worked on in class" in text
     # Labels, not the stored enum values.
     assert "guided practice" in text
     assert "guided_practice" not in text
+
+
+def test_the_context_reaches_the_prompt():
+    request, _ = derive_request(
+        _context(
+            prior_knowledge="Expanding brackets",
+            known_difficulties="Sign errors with a negative constant",
+            terminology="we say the ac method",
+        )
+    )
+
+    prompt = (
+        PROBLEM_PROMPT.invoke(
+            {
+                "teaching_context": format_teaching_context(request.teaching_context),
+                "topic": request.topic,
+                "difficulty": "medium",
+                "context": "",
+                "avoid": "",
+            }
+        )
+        .to_messages()[1]
+        .content
+    )
+
+    assert "Expanding brackets" in prompt
+    assert "Sign errors with a negative constant" in prompt
+    assert "we say the ac method" in prompt
+
+
+def test_a_condition_without_a_context_step_sends_nothing_extra():
+    """The control condition has no context, and the prompt must not gain an empty
+    heading announcing that."""
+    assert format_teaching_context("") == ""
+    assert format_teaching_context("   ") == ""
+
+
+def test_teacher_intents_are_written_out_not_slugged():
+    """These reach both the teacher's summary and the model."""
+    request, _ = derive_request(_context(teacher_intents=["no_long_text", "class_terminology"]))
+
+    assert "no long explanatory texts" in request.teaching_context
+    assert "no_long_text" not in request.teaching_context

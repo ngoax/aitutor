@@ -11,7 +11,7 @@ from app.generation.persist import (
     slugify,
     unique_problem_id,
 )
-from app.generation.pipeline import generate_draft, regenerate_step
+from app.generation.pipeline import call_count, generate_draft, regenerate_step
 from app.llm.provider_config import ProviderConfig
 from app.models import DraftStatus, Problem, Project, Step
 from app.schemas.draft import ProblemDraftRead
@@ -39,8 +39,18 @@ def _run_generation(
         problem = session.get(Problem, problem_id)
         if problem is None:
             return
+
+        def report(done: int, total: int) -> None:
+            problem.progress_done = done
+            problem.progress_total = total
+            session.add(problem)
+            session.commit()
+
         try:
-            draft = generate_draft(request, project_id=problem.project_id, config=config)
+            report(0, call_count(request))
+            draft = generate_draft(
+                request, project_id=problem.project_id, config=config, on_progress=report
+            )
             persist_draft(session, problem, request, draft)
         except Exception as exc:
             # Surfaced to the teacher through the polled draft rather than raised:
@@ -65,12 +75,12 @@ def start_generation(
 
     config = _provider_config(project)
 
-    # The id comes from the topic, not the generated title, because the row has to
-    # exist before there is a title. It is also the more stable of the two: the
-    # same topic keeps its slug across regenerations.
+    # The id comes from the project, not the generated title or the topic: the row
+    # exists before there is a title, and a topic can be a whole learning-goal
+    # sentence, which slugifies to a truncated mess.
     problem = Problem(
         project_id=project_id,
-        oatutor_id=unique_problem_id(session, project_id, slugify(payload.topic)),
+        oatutor_id=unique_problem_id(session, project_id, slugify(project.source_name)),
         title=payload.topic,
         topic=payload.topic,
         difficulty=payload.difficulty,

@@ -158,6 +158,8 @@ class Problem(SQLModel, table=True):
     generation_request: dict[str, Any] = _json_column(dict)
     # Chunk ids that grounded this generation for display of sources
     source_chunk_ids: list[str] = _json_column(list)
+    progress_done: int = 0
+    progress_total: int = 0
     run_id: int | None = Field(default=None, foreign_key="generationrun.id", ondelete="SET NULL")
     # Which candidate this is within its slot; alternatives share a slot.
     slot_index: int = 0

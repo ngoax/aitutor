@@ -25,6 +25,14 @@ ROLE_LABELS: dict[str, str] = {
     "review": "support retrieval and consolidation",
 }
 
+INTENT_LABELS: dict[str, str] = {
+    "no_gamification": "no gamification",
+    "no_long_text": "no long explanatory texts",
+    "explain_reasoning": "learners should explain their reasoning",
+    "class_examples": "examples should connect to current classroom content",
+    "class_terminology": "use the terminology introduced in class",
+}
+
 KNOWLEDGE_LABELS: dict[str, str] = {
     "fact": "fact knowledge",
     "rule": "rule-based knowledge",
@@ -32,8 +40,8 @@ KNOWLEDGE_LABELS: dict[str, str] = {
 }
 
 FEEDBACK_LABELS: dict[str, str] = {
-    "corrective": "the correct answer is shown",
-    "implicit": "hints only, stopping short of the answer",
+    "corrective": "the last hint gives the correct answer",
+    "implicit": "the hints stop short of the correct answer",
 }
 
 
@@ -44,12 +52,12 @@ def _join(values: list[str], labels: dict[str, str]) -> str:
 def build_summary(context: ContextInput) -> list[SummarySection]:
     """The confirmable summary. Sections the teacher left empty are left out
     rather than shown blank, so what appears is what they actually decided."""
+    setting = " ".join(part for part in (context.location, context.group_work) if part)
     constraints = [
         part
         for part in (
             f"{context.duration_minutes} minutes" if context.duration_minutes else "",
-            context.location,
-            context.group_work,
+            f"worked on {setting}" if setting else "",
         )
         if part
     ]
@@ -65,18 +73,9 @@ def build_summary(context: ContextInput) -> list[SummarySection]:
             if context.learning_goal
             else "",
         ),
-        (
-            "Instructional continuity",
-            "; ".join(
-                part
-                for part in (
-                    context.instructional_history,
-                    context.representations,
-                    context.terminology,
-                )
-                if part
-            ),
-        ),
+        ("How it has been taught", context.instructional_history),
+        ("Representations already used", context.representations),
+        ("Terminology used in class", context.terminology),
         (
             "Tutor role",
             "; ".join(
@@ -92,7 +91,10 @@ def build_summary(context: ContextInput) -> list[SummarySection]:
             "Teacher intent",
             "; ".join(
                 part
-                for part in (", ".join(context.teacher_intents), context.teacher_intent_note)
+                for part in (
+                    _join(context.teacher_intents, INTENT_LABELS),
+                    context.teacher_intent_note,
+                )
                 if part
             ),
         ),

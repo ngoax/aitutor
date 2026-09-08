@@ -111,3 +111,19 @@ def test_the_condition_can_be_reassigned(client):
     updated = client.patch("/api/projects/1", json={"study_condition": "control"}).json()
 
     assert updated["study_condition"] == "control"
+
+
+def test_the_critique_is_unavailable_until_a_rubric_exists(client, monkeypatch):
+    monkeypatch.setattr("app.api.routes.context.GOAL_CRITIQUE_RUBRIC", "")
+    client.patch("/api/projects/1/context", json={"learning_goal": "Factor a quadratic"})
+
+    assert client.get("/api/projects/1/context/summary").json()["critique_enabled"] is False
+    refused = client.post("/api/projects/1/context/critique")
+    assert refused.status_code == 409
+    assert "rubric" in refused.json()["detail"]
+
+
+def test_writing_a_rubric_switches_it_on(client, monkeypatch):
+    monkeypatch.setattr("app.api.routes.context.GOAL_CRITIQUE_RUBRIC", "Judge it like this.")
+
+    assert client.get("/api/projects/1/context/summary").json()["critique_enabled"] is True

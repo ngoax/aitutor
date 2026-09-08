@@ -29,6 +29,17 @@ def format_steps(steps: list[GeneratedStep]) -> str:
     return "\n\n".join(context)
 
 
+def format_teaching_context(summary: str) -> str:
+    if not summary.strip():
+        return ""
+    return (
+        "The teacher described the situation this is for. Honour it: build on what "
+        "learners already know, target the difficulties named, and use their "
+        "terminology.\n"
+        f"{summary}\n\n---\n\n"
+    )
+
+
 def format_avoid(written: list[str]) -> str:
     """Ensures the clause makes the next alternative differ from the ones before it"""
     if not written:
@@ -69,6 +80,7 @@ SYSTEM = (
 )
 
 PROBLEM_HUMAN = (
+    "{teaching_context}"
     "Course material:\n"
     "{context}\n\n"
     "---\n\n"
@@ -87,6 +99,7 @@ PROBLEM_PROMPT = ChatPromptTemplate.from_messages(
 
 
 STEP_HUMAN = (
+    "{teaching_context}"
     "Course material:\n"
     "{context}\n\n"
     "---\n\n"
@@ -116,6 +129,7 @@ RETRY_HUMAN = (
 
 
 HINT_HUMAN = (
+    "{teaching_context}"
     "Course material:\n"
     "{context}\n\n"
     "---\n\n"

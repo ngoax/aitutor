@@ -26,12 +26,8 @@ class StepDraftRead(StepRead):
 
 
 class ProblemDraftRead(ProblemRead):
-    """Generated problem with everything hanging off it, so the review UI can
-    render a draft from one response.
-
-    While `status` is `generating` the steps list is empty and the client polls;
-    on `failed`, `error` says why.
-    """
 
     error: str | None = None
+    progress_done: int = 0
+    progress_total: int = 0
     steps: list[StepDraftRead]

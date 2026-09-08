@@ -1,9 +1,4 @@
-"""Turn a generated draft into Problem, Step and HintEntry rows, and back again.
-
-The generation schemas omit anything the server owns (ids, ordering, hint types),
-so this module fills those in and reshapes each step type's answer for the Step
-table. Regenerating one step needs the reverse direction too.
-"""
+"""Turn a generated draft into Problem, Step and HintEntry rows and back again"""
 
 import re
 import string
@@ -211,7 +206,8 @@ def persist_alternative(
     draft: GeneratedDraft,
 ) -> Problem:
     """Store one candidate. Alternatives share a slot and differ by alternative_index."""
-    base = slugify(f"{request.topic} {slot_index + 1}{string.ascii_lowercase[alternative_index]}")
+    letter = string.ascii_lowercase[alternative_index]
+    base = slugify(f"{run.project.source_name} {slot_index + 1}{letter}")
     problem = Problem(
         project_id=run.project_id,
         run_id=run.id,

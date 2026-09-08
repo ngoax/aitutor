@@ -192,7 +192,9 @@ def _problem_documents(
     documents: dict[Path, Any] = {
         base / f"{problem.oatutor_id}.json": _problem_json(problem, project, lesson_id)
     }
-    skill = slugify(problem.topic or problem.title)
+    # Curated and reused, not derived from free text: a learning goal slugifies to
+    # a truncated sentence, and BKT would track that as a knowledge component.
+    skill = slugify(project.source_name)
     skills = {}
     for step in sorted(problem.steps, key=lambda step: step.order_index):
         step_dir = base / "steps" / step.oatutor_id

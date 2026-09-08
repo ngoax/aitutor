@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 
+from app.context.summary import summary_text
 from app.models import FeedbackMode, KnowledgeType, ProblemType, TutorScope
 from app.schemas.context import ContextInput, Derivation
 from app.schemas.generation import GenerationRequest
@@ -89,6 +90,7 @@ def derive_request(context: ContextInput) -> tuple[GenerationRequest, list[Deriv
 
     request = GenerationRequest(
         topic=context.learning_goal or "the learning goal",
+        teaching_context=summary_text(context),
         problem_type=pattern.problem_type,
         num_steps=pattern.num_steps,
         num_hints=pattern.num_hints,

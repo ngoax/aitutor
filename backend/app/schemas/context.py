@@ -4,6 +4,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import FeedbackMode, KnowledgeType, TutorScope
+from app.schemas.generation import GenerationRequest
 
 
 class ContextInput(BaseModel):
@@ -80,7 +81,9 @@ class ContextSummaryRead(BaseModel):
 
     sections: list[SummarySection]
     derivations: list[Derivation]
+    request: GenerationRequest
     num_slots: int
     complete: bool
     confirmed: bool
+    critique_enabled: bool
     missing: list[str]
