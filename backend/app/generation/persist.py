@@ -25,6 +25,7 @@ from app.generation.pipeline import DraftStep, GeneratedDraft
 from app.models import (
     AnswerType,
     DraftStatus,
+    GenerationRun,
     HintEntry,
     HintType,
     Problem,
@@ -199,3 +200,30 @@ def replace_step(
     session.commit()
     session.refresh(step)
     return step
+
+
+def persist_alternative(
+    session: Session,
+    run: GenerationRun,
+    slot_index: int,
+    alternative_index: int,
+    request: GenerationRequest,
+    draft: GeneratedDraft,
+) -> Problem:
+    """Store one candidate. Alternatives share a slot and differ by alternative_index."""
+    base = slugify(f"{request.topic} {slot_index + 1}{string.ascii_lowercase[alternative_index]}")
+    problem = Problem(
+        project_id=run.project_id,
+        run_id=run.id,
+        slot_index=slot_index,
+        alternative_index=alternative_index,
+        oatutor_id=unique_problem_id(session, run.project_id, base),
+        title=request.topic,
+        topic=request.topic,
+        difficulty=request.difficulty,
+        generation_request=request.model_dump(mode="json"),
+    )
+    session.add(problem)
+    session.commit()
+    session.refresh(problem)
+    return persist_draft(session, problem, request, draft)

@@ -15,6 +15,7 @@ from app.api.routes import (
     projects,
     providers,
     retrieval,
+    runs,
     steps,
     uploads,
 )
@@ -80,6 +81,7 @@ def create_app() -> FastAPI:
     app.include_router(generation.router, prefix="/api")
     app.include_router(drafts.router, prefix="/api")
     app.include_router(drafts.step_router, prefix="/api")
+    app.include_router(runs.router, prefix="/api")
     app.include_router(export.router, prefix="/api")
     return app
 

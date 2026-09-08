@@ -143,7 +143,6 @@ HINT_PROMPT = ChatPromptTemplate.from_messages(
 )
 
 
-
 GOAL_CRITIQUE_RUBRIC = ""
 
 GOAL_CRITIQUE_SYSTEM = (
