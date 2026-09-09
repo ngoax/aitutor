@@ -7,6 +7,11 @@ services:
     environment:
       DATA_DIR: /data
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AZURE_API_KEY: ${AZURE_API_KEY:-}
+      AZURE_ENDPOINT: ${AZURE_ENDPOINT:-}
+      AZURE_API_VERSION: ${AZURE_API_VERSION:-2024-10-21}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
     volumes:
       - data:/data
       - hf-cache:/opt/hf

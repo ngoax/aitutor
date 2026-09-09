@@ -6,7 +6,7 @@ ChatProvider = Literal["openai", "anthropic", "ollama", "nvidia", "azure"]
 
 CHAT_PROVIDERS: tuple[ChatProvider, ...] = get_args(ChatProvider)
 
-DEFAULT_PROVIDER: ChatProvider = "openai"
+DEFAULT_PROVIDER: ChatProvider = "azure"
 
 DEFAULT_MODELS: dict[str, str] = {
     "openai": "gpt-5.6-luna",
