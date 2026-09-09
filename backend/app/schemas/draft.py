@@ -26,7 +26,6 @@ class StepDraftRead(StepRead):
 
 
 class ProblemDraftRead(ProblemRead):
-
     error: str | None = None
     progress_done: int = 0
     progress_total: int = 0

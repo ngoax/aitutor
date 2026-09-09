@@ -39,4 +39,5 @@ class ProblemRead(BaseModel):
     topic: str | None = None
     difficulty: str | None = None
     status: DraftStatus
+    selected: bool = False
     created_at: datetime

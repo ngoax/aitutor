@@ -130,6 +130,11 @@ export const api = {
   listRuns: (projectId: number) => request<GenerationRun[]>(`/projects/${projectId}/runs`),
   getRun: (projectId: number, runId: number) =>
     request<RunDetail>(`/projects/${projectId}/runs/${runId}`),
+  selectAlternative: (projectId: number, runId: number, problemId: number) =>
+    request<RunDetail>(`/projects/${projectId}/runs/${runId}/select`, {
+      method: "POST",
+      body: JSON.stringify({ problem_id: problemId }),
+    }),
 
   exportProject: (projectId: number) =>
     request<ExportResult>(`/projects/${projectId}/export`, { method: "POST" }),

@@ -185,6 +185,7 @@ export type ProblemDraft = {
   topic: string | null;
   difficulty: string | null;
   status: DraftStatus;
+  selected: boolean;
   error: string | null;
   progress_done: number;
   progress_total: number;

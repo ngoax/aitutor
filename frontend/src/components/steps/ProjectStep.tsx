@@ -166,7 +166,6 @@ export function ProjectStep({
             onChange={(value) => onProjectChange({ study_condition: value as never })}
           />
           <p className="field-hint">
-            Decides which phases this participant works through, and so which steps appear above.
           </p>
         </>
       )}

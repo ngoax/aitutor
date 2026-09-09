@@ -265,6 +265,9 @@ def export_project(session: Session, project: Project) -> ExportResult:
         if problem.status in (DraftStatus.GENERATING, DraftStatus.FAILED):
             skipped[problem.oatutor_id] = f"status is {problem.status.value}"
             continue
+        if problem.run_id is not None and not problem.selected:
+            skipped[problem.oatutor_id] = "not chosen from its alternatives"
+            continue
         if not problem.steps:
             skipped[problem.oatutor_id] = "has no steps"
             continue

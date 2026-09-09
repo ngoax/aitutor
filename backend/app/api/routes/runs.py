@@ -6,10 +6,10 @@ from app.core.db import SessionDep, engine
 from app.generation.persist import persist_alternative
 from app.generation.pipeline import generate_alternatives
 from app.llm.provider_config import ProviderConfig
-from app.models import GenerationRun, Problem, Project, RunStatus
+from app.models import DraftStatus, GenerationRun, Problem, Project, RunStatus
 from app.schemas.context import ContextInput
 from app.schemas.generation import GenerationRequest
-from app.schemas.run import RunCreate, RunDetailRead, RunRead, SlotRead
+from app.schemas.run import RunCreate, RunDetailRead, RunRead, SelectAlternative, SlotRead
 
 router = APIRouter(prefix="/projects/{project_id}/runs", tags=["runs"])
 
@@ -91,11 +91,16 @@ def list_runs(project_id: int, session: SessionDep) -> list[GenerationRun]:
     )
 
 
-@router.get("/{run_id}", response_model=RunDetailRead)
-def get_run(project_id: int, run_id: int, session: SessionDep) -> RunDetailRead:
+def _load_run(project_id: int, run_id: int, session: Session) -> GenerationRun:
     run = session.get(GenerationRun, run_id)
     if run is None or run.project_id != project_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Run not found")
+    return run
+
+
+@router.get("/{run_id}", response_model=RunDetailRead)
+def get_run(project_id: int, run_id: int, session: SessionDep) -> RunDetailRead:
+    run = _load_run(project_id, run_id, session)
 
     problems = session.exec(
         select(Problem)
@@ -111,3 +116,32 @@ def get_run(project_id: int, run_id: int, session: SessionDep) -> RunDetailRead:
         **RunRead.model_validate(run).model_dump(),
         slots=[SlotRead(slot_index=i, alternatives=slots[i]) for i in sorted(slots)],
     )
+
+
+@router.post("/{run_id}/select", response_model=RunDetailRead)
+def select_alternative(
+    project_id: int,
+    run_id: int,
+    payload: SelectAlternative,
+    session: SessionDep,
+) -> RunDetailRead:
+    """Keep one candidate and drop its siblings. Only a selected candidate is exported."""
+    _load_run(project_id, run_id, session)
+    chosen = session.get(Problem, payload.problem_id)
+    if chosen is None or chosen.run_id != run_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No such candidate in this run"
+        )
+    if chosen.status is DraftStatus.GENERATING:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="That candidate is still being written."
+        )
+
+    siblings = session.exec(
+        select(Problem).where(Problem.run_id == run_id, Problem.slot_index == chosen.slot_index)
+    ).all()
+    for problem in siblings:
+        problem.selected = problem.id == chosen.id
+        session.add(problem)
+    session.commit()
+    return get_run(project_id, run_id, session)

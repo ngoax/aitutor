@@ -52,7 +52,7 @@ export function MaterialsStep({ projectId, documents, onChanged }: Props) {
       <h2>Add your materials</h2>
       <p className="lede">
         Textbook chapters, lecture slides, worksheets. Everything you generate will be grounded
-        in these — nothing is sent anywhere unless you choose a hosted model.
+        in these.
       </p>
 
       <DropZone onFile={upload} busy={busy} />

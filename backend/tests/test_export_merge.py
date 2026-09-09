@@ -130,3 +130,29 @@ def test_multiple_choice_may_keep_its_dollars(session, step, populated_root):
     session.commit()
 
     assert export_project(session, step.problem.project).written == [step.problem.oatutor_id]
+
+
+def test_only_the_chosen_candidate_is_exported(session, step, populated_root):
+    _answerable(session, step)
+    problem = step.problem
+    problem.run_id = 1
+    session.add(problem)
+    session.commit()
+
+    result = export_project(session, problem.project)
+
+    assert result.written == []
+    assert result.skipped[problem.oatutor_id] == "not chosen from its alternatives"
+
+
+def test_a_chosen_candidate_is_exported(session, step, populated_root):
+    _answerable(session, step)
+    problem = step.problem
+    problem.run_id = 1
+    problem.selected = True
+    session.add(problem)
+    session.commit()
+
+    result = export_project(session, problem.project)
+
+    assert result.written == [problem.oatutor_id]

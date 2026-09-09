@@ -164,6 +164,7 @@ class Problem(SQLModel, table=True):
     # Which candidate this is within its slot; alternatives share a slot.
     slot_index: int = 0
     alternative_index: int = 0
+    selected: bool = False
     created_at: datetime = Field(default_factory=_now)
 
     run: GenerationRun | None = Relationship(back_populates="problems")

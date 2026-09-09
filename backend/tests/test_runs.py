@@ -119,3 +119,64 @@ def test_a_run_stores_every_alternative_against_its_slot(client):
         # Distinct rows, not the same problem listed three times.
         assert len({p["id"] for p in slot["alternatives"]}) == 3
         assert len({p["oatutor_id"] for p in slot["alternatives"]}) == 3
+
+
+def _ready_run(client):
+    client.patch("/api/projects/1/context", json=CONTEXT)
+    client.post("/api/projects/1/context/confirm")
+    return client.post("/api/projects/1/runs", json={"num_alternatives": 3}).json()["id"]
+
+
+def test_selecting_a_candidate_drops_its_siblings(client):
+    run_id = _ready_run(client)
+    slot = client.get(f"/api/projects/1/runs/{run_id}").json()["slots"][0]
+    chosen = slot["alternatives"][1]["id"]
+
+    stored = client.post(
+        f"/api/projects/1/runs/{run_id}/select", json={"problem_id": chosen}
+    ).json()
+
+    kept = [p for p in stored["slots"][0]["alternatives"] if p["selected"]]
+    assert [p["id"] for p in kept] == [chosen]
+
+
+def test_selecting_again_moves_the_choice(client):
+    run_id = _ready_run(client)
+    alternatives = client.get(f"/api/projects/1/runs/{run_id}").json()["slots"][0]["alternatives"]
+
+    client.post(f"/api/projects/1/runs/{run_id}/select", json={"problem_id": alternatives[0]["id"]})
+    stored = client.post(
+        f"/api/projects/1/runs/{run_id}/select", json={"problem_id": alternatives[2]["id"]}
+    ).json()
+
+    kept = [p["id"] for p in stored["slots"][0]["alternatives"] if p["selected"]]
+    assert kept == [alternatives[2]["id"]]
+
+
+def test_each_slot_carries_its_own_choice(client):
+    run_id = _ready_run(client)
+    slots = client.get(f"/api/projects/1/runs/{run_id}").json()["slots"]
+
+    client.post(
+        f"/api/projects/1/runs/{run_id}/select",
+        json={"problem_id": slots[0]["alternatives"][0]["id"]},
+    )
+    stored = client.post(
+        f"/api/projects/1/runs/{run_id}/select",
+        json={"problem_id": slots[1]["alternatives"][1]["id"]},
+    ).json()
+
+    kept = [[p["id"] for p in slot["alternatives"] if p["selected"]] for slot in stored["slots"]]
+    assert kept == [[slots[0]["alternatives"][0]["id"]], [slots[1]["alternatives"][1]["id"]]]
+
+
+def test_a_candidate_from_another_run_is_rejected(client):
+    run_id = _ready_run(client)
+    other_id = client.post("/api/projects/1/runs", json={"num_alternatives": 2}).json()["id"]
+    stranger = client.get(f"/api/projects/1/runs/{other_id}").json()["slots"][0]["alternatives"][0]
+
+    response = client.post(
+        f"/api/projects/1/runs/{run_id}/select", json={"problem_id": stranger["id"]}
+    )
+
+    assert response.status_code == 404

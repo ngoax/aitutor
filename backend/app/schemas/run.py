@@ -13,6 +13,10 @@ class RunCreate(BaseModel):
     num_alternatives: int = Field(default=3, ge=2, le=5)
 
 
+class SelectAlternative(BaseModel):
+    problem_id: int
+
+
 class RunRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
