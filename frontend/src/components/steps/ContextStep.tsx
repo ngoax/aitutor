@@ -210,6 +210,7 @@ export function ContextStep({ projectId, onSummary }: Props) {
       />
       <TextArea
         label="Describe the learning goal in one sentence"
+        hint="This is also the query used to search your materials, so name the concept the way you would look it up."
         rows={2}
         value={context.learning_goal}
         placeholder="Learners can factor a quadratic with a non-unit leading coefficient"

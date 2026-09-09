@@ -73,16 +73,8 @@ export function ConfigureStep({
         </div>
       )}
 
-      {derived ? (
-        <div className="field-block">
-          <span className="select-label">What it is about</span>
-          <p className="derived-topic">{request.topic}</p>
-          <p className="field-hint">
-            Your learning goal, which is also the query used to search your materials.
-            Edit it in the Context step.
-          </p>
-        </div>
-      ) : (
+      {}
+      {!derived && (
         <label className="field-block">
           <span className="select-label">What should it be about?</span>
           <input

@@ -1191,12 +1191,6 @@ textarea.text-input {
   color: var(--ok);
   font-weight: 550;
 }
-.derived-topic {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 550;
-}
-
 /* ---------- generation progress ---------- */
 .progress {
   margin: 0.75rem 0 0.25rem;
