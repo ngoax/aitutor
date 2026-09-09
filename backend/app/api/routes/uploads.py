@@ -29,8 +29,15 @@ def _run_ingestion(document_id: int) -> None:
         document = session.get(SourceDocument, document_id)
         if document is None:
             return
+
+        def report(done: int, total: int) -> None:
+            document.progress_done = done
+            document.progress_total = total
+            session.add(document)
+            session.commit()
+
         try:
-            chunk_count = ingest_document(document)
+            chunk_count = ingest_document(document, on_progress=report)
             document.status = IngestionStatus.INDEXED
             document.chunk_count = chunk_count
             document.error = None

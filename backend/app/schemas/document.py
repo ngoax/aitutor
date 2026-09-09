@@ -15,4 +15,6 @@ class SourceDocumentRead(BaseModel):
     status: IngestionStatus
     chunk_count: int
     error: str | None
+    progress_done: int = 0
+    progress_total: int = 0
     created_at: datetime

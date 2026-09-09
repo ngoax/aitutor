@@ -1,7 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from sqlmodel import Session, select
 
 from app.context.derivation import derive_request, derive_slots
+from app.core.config import settings
 from app.core.db import SessionDep, engine
 from app.generation.persist import persist_alternative
 from app.generation.pipeline import generate_alternatives
@@ -15,21 +18,35 @@ router = APIRouter(prefix="/projects/{project_id}/runs", tags=["runs"])
 
 
 def _run_generation(run_id: int, config: ProviderConfig | None) -> None:
+    """Generate every slot and store the candidates."""
     with Session(engine) as session:
         run = session.get(GenerationRun, run_id)
         if run is None:
             return
         request = GenerationRequest(**run.request_snapshot)
+        workers = min(settings.generation_workers, run.num_slots)
         try:
-            for slot in range(run.num_slots):
-                drafts = generate_alternatives(
-                    request=request,
-                    project_id=run.project_id,
-                    count=run.num_alternatives,
-                    config=config,
-                )
-                for index, draft in enumerate(drafts):
-                    persist_alternative(session, run, slot, index, request, draft)
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                futures = {
+                    pool.submit(
+                        generate_alternatives,
+                        request=request,
+                        project_id=run.project_id,
+                        count=run.num_alternatives,
+                        config=config,
+                    ): slot
+                    for slot in range(run.num_slots)
+                }
+                for future in as_completed(futures):
+                    slot = futures[future]
+                    candidates = [
+                        persist_alternative(session, run, slot, index, request, draft)
+                        for index, draft in enumerate(future.result())
+                    ]
+                    if len(candidates) == 1:
+                        candidates[0].selected = True
+                        session.add(candidates[0])
+                        session.commit()
             run.status = RunStatus.READY
         except Exception as exc:
             run.status = RunStatus.FAILED

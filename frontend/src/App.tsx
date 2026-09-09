@@ -61,7 +61,7 @@ export default function App() {
 
   const loadDocuments = useCallback(() => {
     if (selectedId === null) return;
-    api.listDocuments(selectedId).then(setDocuments).catch(() => setDocuments([]));
+    api.listDocuments(selectedId).then(setDocuments).catch(() => {});
   }, [selectedId]);
 
   const handleProjectDeleted = useCallback(
@@ -88,6 +88,7 @@ export default function App() {
 
   useEffect(() => {
     setRunReady(false);
+    setDocuments([]);
     if (selectedId === null) return setSummary(null);
     api
       .contextSummary(selectedId)

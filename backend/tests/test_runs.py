@@ -1,3 +1,6 @@
+import threading
+import time
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
@@ -180,3 +183,46 @@ def test_a_candidate_from_another_run_is_rejected(client):
     )
 
     assert response.status_code == 404
+
+
+def test_slots_are_generated_concurrently(client, monkeypatch):
+    """Slots are independent, so a run must not wait for one before starting the next."""
+    lock = threading.Lock()
+    state = {"active": 0, "peak": 0}
+
+    def slow(request, project_id, count, config=None):
+        with lock:
+            state["active"] += 1
+            state["peak"] = max(state["peak"], state["active"])
+        time.sleep(0.2)
+        with lock:
+            state["active"] -= 1
+        return fake_alternatives(request, project_id, count, config)
+
+    monkeypatch.setattr("app.api.routes.runs.generate_alternatives", slow)
+    run_id = _ready_run(client)
+
+    stored = client.get(f"/api/projects/1/runs/{run_id}").json()
+    assert stored["status"] == "ready"
+    assert len(stored["slots"]) == 2
+    assert state["peak"] == 2
+
+
+def test_a_single_candidate_needs_no_choosing(client):
+    client.patch("/api/projects/1/context", json=CONTEXT)
+    client.post("/api/projects/1/context/confirm")
+    run_id = client.post("/api/projects/1/runs", json={"num_alternatives": 1}).json()["id"]
+
+    stored = client.get(f"/api/projects/1/runs/{run_id}").json()
+
+    for slot in stored["slots"]:
+        assert [c["selected"] for c in slot["alternatives"]] == [True]
+
+
+def test_more_than_three_alternatives_is_rejected(client):
+    client.patch("/api/projects/1/context", json=CONTEXT)
+    client.post("/api/projects/1/context/confirm")
+
+    response = client.post("/api/projects/1/runs", json={"num_alternatives": 4})
+
+    assert response.status_code == 422

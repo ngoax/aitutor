@@ -14,15 +14,13 @@ type Props = {
   onReadyChange: (ready: boolean) => void;
 };
 
-/** One label per candidate, in the order the backend writes them. */
-function candidateLabels(slots: number, alternatives: number): string[] {
-  const labels: string[] = [];
-  for (let slot = 1; slot <= slots; slot += 1) {
-    for (let n = 1; n <= alternatives; n += 1) {
-      labels.push(`Writing task ${slot}, version ${n} of ${alternatives}`);
-    }
-  }
-  return labels;
+// Slots are generated concurrently, so no single label describes what is in
+// flight. The count carries the detail instead.
+const RUN_LABELS = ["Writing the tasks"];
+
+function modelCalls(request: GenerationRequest, slots: number, alternatives: number): number {
+  const perCandidate = 1 + request.num_steps * (request.num_hints > 0 ? 2 : 1);
+  return slots * alternatives * perCandidate;
 }
 
 function chosenIn(slot: RunSlot): ProblemDraft | null {
@@ -31,7 +29,7 @@ function chosenIn(slot: RunSlot): ProblemDraft | null {
 
 export function AlternativesStep({ projectId, request, numSlots, onReadyChange }: Props) {
   const [run, setRun] = useState<RunDetail | null>(null);
-  const [alternatives, setAlternatives] = useState(3);
+  const [alternatives, setAlternatives] = useState(2);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [regeneratingId, setRegeneratingId] = useState<number | null>(null);
@@ -110,8 +108,14 @@ export function AlternativesStep({ projectId, request, numSlots, onReadyChange }
     <div className="step-body">
       <h2>Generate</h2>
       <p className="lede">
-        Each task is written {alternatives} ways. Read them against each other, keep the one that
-        fits your class, and edit it from there. Only the version you keep is exported.
+        {alternatives === 1 ? (
+          "Each task is written once. Edit it to fit your class, then export."
+        ) : (
+          <>
+            Each task is written {alternatives} ways. Read them against each other, keep the one
+            that fits your class, and edit it from there. Only the version you keep is exported.
+          </>
+        )}
       </p>
 
       <div className="summary">
@@ -130,14 +134,18 @@ export function AlternativesStep({ projectId, request, numSlots, onReadyChange }
             {request.use_scaffolds && ", some asking questions"}
           </span>
         </div>
+        <div>
+          <span className="summary-key">Model calls</span>
+          <span className="summary-val">{modelCalls(request, numSlots, alternatives)}</span>
+        </div>
       </div>
 
       <NumberStepper
         label="Versions of each task"
-        hint="More to compare, one model call each."
+        hint="More to compare, and every version is a whole task to write."
         value={alternatives}
-        min={2}
-        max={5}
+        min={1}
+        max={3}
         onChange={setAlternatives}
       />
 
@@ -150,7 +158,7 @@ export function AlternativesStep({ projectId, request, numSlots, onReadyChange }
           <ProgressBar
             done={written}
             total={run.num_slots * run.num_alternatives}
-            labels={candidateLabels(run.num_slots, run.num_alternatives)}
+            labels={RUN_LABELS}
           />
           <p className="field-hint">You can leave this page and come back.</p>
         </>
@@ -159,7 +167,7 @@ export function AlternativesStep({ projectId, request, numSlots, onReadyChange }
       {error && <p className="error">{error}</p>}
       {run?.error && <p className="error">{run.error}</p>}
 
-      {run && run.slots.length > 0 && (
+      {run && run.num_alternatives > 1 && slotCount > 0 && (
         <p className="field-hint">
           {chosen} of {slotCount} tasks chosen.
         </p>
@@ -189,14 +197,16 @@ export function AlternativesStep({ projectId, request, numSlots, onReadyChange }
                       </li>
                     ))}
                   </ol>
-                  <button
-                    type="button"
-                    className={`btn ${candidate.selected ? "btn-ghost" : "btn-primary"}`}
-                    disabled={generating || candidate.status === "generating"}
-                    onClick={() => choose(candidate.id)}
-                  >
-                    {candidate.selected ? "Kept" : "Keep this one"}
-                  </button>
+                  {slot.alternatives.length > 1 && (
+                    <button
+                      type="button"
+                      className={`btn ${candidate.selected ? "btn-ghost" : "btn-primary"}`}
+                      disabled={generating || candidate.status === "generating"}
+                      onClick={() => choose(candidate.id)}
+                    >
+                      {candidate.selected ? "Kept" : "Keep this one"}
+                    </button>
+                  )}
                 </article>
               ))}
             </div>

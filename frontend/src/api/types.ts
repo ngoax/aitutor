@@ -102,6 +102,8 @@ export type SourceDocument = {
   status: IngestionStatus;
   chunk_count: number;
   error: string | null;
+  progress_done: number;
+  progress_total: number;
   created_at: string;
 };
 

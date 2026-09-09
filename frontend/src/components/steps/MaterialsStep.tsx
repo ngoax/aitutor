@@ -2,12 +2,16 @@ import { useState } from "react";
 import { api } from "../../api/client";
 import type { SourceDocument } from "../../api/types";
 import { DropZone } from "../DropZone";
+import { ProgressBar } from "../ProgressBar";
 
 type Props = {
   projectId: number;
   documents: SourceDocument[];
   onChanged: () => void;
 };
+
+/** Reading the document is one opaque call, so only indexing reports a count. */
+const INGESTION_LABELS = ["Reading the document", "Indexing the text"];
 
 const STATUS_TEXT: Record<SourceDocument["status"], string> = {
   pending: "Extracting…",
@@ -73,16 +77,20 @@ export function MaterialsStep({ projectId, documents, onChanged }: Props) {
                   />
                 </svg>
               </span>
-              <span className="doc-main">
+              <div className="doc-main">
                 <span className="doc-name">{doc.filename}</span>
                 {doc.error && <span className="doc-error">{doc.error}</span>}
-              </span>
+                {doc.status === "pending" && (
+                  <ProgressBar
+                    done={doc.progress_done}
+                    total={doc.progress_total}
+                    labels={INGESTION_LABELS}
+                  />
+                )}
+              </div>
               <span className="doc-meta">
                 {doc.status === "indexed" && <span className="chips">{doc.chunk_count} chunks</span>}
-                <span className={`pill pill-${doc.status}`}>
-                  {doc.status === "pending" && <span className="spinner" />}
-                  {STATUS_TEXT[doc.status]}
-                </span>
+                <span className={`pill pill-${doc.status}`}>{STATUS_TEXT[doc.status]}</span>
                 <button
                   type="button"
                   className="icon-btn"

@@ -25,6 +25,10 @@ class Settings(BaseSettings):
 
     static_dir: Path | None = None
 
+    # Task slots generated at once. Alternatives within a slot stay sequential,
+    # since each one is told what the previous ones wrote.
+    generation_workers: int = 3
+
     @property
     def uploads_dir(self) -> Path:
         return self.data_dir / "uploads"

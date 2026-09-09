@@ -10,7 +10,7 @@ from app.schemas.draft import ProblemDraftRead
 class RunCreate(BaseModel):
     # Defaults to what the context implies; the teacher may ask for fewer or more.
     num_slots: int | None = Field(default=None, ge=1, le=20)
-    num_alternatives: int = Field(default=3, ge=2, le=5)
+    num_alternatives: int = Field(default=2, ge=1, le=3)
 
 
 class SelectAlternative(BaseModel):

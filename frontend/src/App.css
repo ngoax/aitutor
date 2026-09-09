@@ -514,10 +514,15 @@ body {
   color: var(--muted);
 }
 .doc-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
   flex: 1;
   min-width: 0;
 }
 .doc-name {
+  max-width: 100%;
   font-size: 0.88rem;
   font-weight: 600;
   overflow: hidden;
@@ -561,21 +566,6 @@ body {
 .pill-failed {
   background: var(--danger-weak);
   color: var(--danger);
-}
-
-.spinner {
-  width: 0.85rem;
-  height: 0.85rem;
-  border: 2px solid var(--border-strong);
-  border-top-color: var(--accent);
-  border-radius: 999px;
-  animation: spin 0.7s linear infinite;
-  flex: none;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* ---------- project cards ---------- */
@@ -955,10 +945,6 @@ body {
   overflow-x: auto;
   overflow-y: hidden;
 }
-.field-hint .spinner {
-  margin-right: 0.4rem;
-  vertical-align: -1px;
-}
 
 /* ---------- inline editing ---------- */
 
@@ -1317,4 +1303,14 @@ textarea.text-input {
 }
 .candidate button {
   margin-top: auto;
+}
+
+/* The ingestion bar sits under the filename, so it must not inherit the
+   generous top margin the standalone one uses. */
+.doc-main .progress {
+  align-self: stretch;
+  margin-top: 0.3rem;
+}
+.doc-main .progress-label {
+  font-size: 0.72rem;
 }

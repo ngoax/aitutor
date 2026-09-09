@@ -66,6 +66,8 @@ class SourceDocument(SQLModel, table=True):
     status: IngestionStatus = IngestionStatus.PENDING
     chunk_count: int = 0
     error: str | None = None
+    progress_done: int = 0
+    progress_total: int = 0
     created_at: datetime = Field(default_factory=_now)
 
     project: Project = Relationship(back_populates="documents")
