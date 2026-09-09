@@ -13,6 +13,7 @@ import type {
 } from "./api/types";
 import ethLogoBlack from "./assets/ethz_logo_black.svg";
 import { Stepper } from "./components/Stepper";
+import { AlternativesStep } from "./components/steps/AlternativesStep";
 import { ConfigureStep } from "./components/steps/ConfigureStep";
 import { ContextStep } from "./components/steps/ContextStep";
 import { ExportStep } from "./components/steps/ExportStep";
@@ -52,6 +53,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
   const [summary, setSummary] = useState<ContextSummary | null>(null);
+  const [runReady, setRunReady] = useState(false);
 
   const loadProjects = useCallback(() => {
     api.listProjects().then(setProjects).catch((e: Error) => setOffline(e.message));
@@ -85,6 +87,7 @@ export default function App() {
   useEffect(loadDocuments, [loadDocuments]);
 
   useEffect(() => {
+    setRunReady(false);
     if (selectedId === null) return setSummary(null);
     api
       .contextSummary(selectedId)
@@ -170,7 +173,7 @@ export default function App() {
     Materials: indexedCount > 0,
     Context: summary?.confirmed ?? false,
     Configure: request.topic.trim().length >= 3,
-    Generate: draft !== null && draft.status !== "generating",
+    Generate: derivesTopic ? runReady : draft !== null && draft.status !== "generating",
     Export: false,
   };
   const canAdvance = gates[steps[step]] ?? false;
@@ -243,17 +246,26 @@ export default function App() {
               onProjectChange={patchProject}
             />
           )}
-          {steps[step] === "Generate" && selectedId !== null && (
-            <GenerateStep
-              projectId={selectedId}
-              request={request}
-              draft={draft}
-              busy={busy}
-              error={error}
-              onGenerate={runGenerate}
-              onSaved={refreshDraft}
-            />
-          )}
+          {steps[step] === "Generate" &&
+            selectedId !== null &&
+            (derivesTopic ? (
+              <AlternativesStep
+                projectId={selectedId}
+                request={request}
+                numSlots={summary?.num_slots ?? 1}
+                onReadyChange={setRunReady}
+              />
+            ) : (
+              <GenerateStep
+                projectId={selectedId}
+                request={request}
+                draft={draft}
+                busy={busy}
+                error={error}
+                onGenerate={runGenerate}
+                onSaved={refreshDraft}
+              />
+            ))}
 
           {steps[step] === "Export" && selectedId !== null && (
             <ExportStep

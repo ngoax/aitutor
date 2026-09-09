@@ -1252,3 +1252,69 @@ textarea.text-input {
 .progress-count {
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- alternatives ---------- */
+
+.slot {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--border-strong);
+}
+.slot-head {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.candidates {
+  display: grid;
+  /* One column per candidate while they fit, wrapping rather than shrinking to
+     unreadable. Comparison is the point, so they must stay side by side. */
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--gap);
+}
+.candidate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.candidate.is-chosen {
+  border-color: var(--accent);
+  background: var(--accent-weak);
+}
+.candidate-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.candidate-num {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.candidate-title {
+  font-weight: 650;
+}
+.candidate-body {
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+}
+.candidate-steps {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.candidate-steps li + li {
+  margin-top: 0.2rem;
+}
+.candidate button {
+  margin-top: auto;
+}
