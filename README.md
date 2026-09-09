@@ -39,26 +39,23 @@ cd frontend && npx tsc --noEmit && npm run build
 
 ## Docker
 
-A two-container test deployment: nginx serves the built frontend and proxies
-`/api` to the backend, so only port 8080 is exposed and the API is same-origin.
 
 ```sh
-cp .env.example .env   # add OPENAI_API_KEY and/or ANTHROPIC_API_KEY
-docker compose up --build
+cp .env.example .env   # fill in provider credentials (API Key and endpoint)
+docker build -t aitutor .
+docker run -d --name aitutor -p 8080:8000 \
+  --env-file .env -v aitutor-data:/data --restart unless-stopped aitutor
 ```
 
-The app is then at http://localhost:8080. State lives in the `data` volume
-(SQLite, uploads, Chroma, exports); `docker compose down -v` deletes it.
+The app is then at http://localhost:8080. State lives in the `aitutor-data`
+volume (SQLite, uploads, Chroma, exports) and outlives the container; `docker
+volume rm aitutor-data` deletes it.
 
-Building for a Linux server from an ARM Mac needs an explicit platform:
 
+ To build for a Linux machine:
 ```sh
-docker buildx build --platform linux/amd64 -t aitutor-backend ./backend
-docker buildx build --platform linux/amd64 -t aitutor-frontend ./frontend
+docker buildx build --platform linux/amd64 -t aitutor .
 ```
-
-`VITE_API_URL` is compiled into the frontend bundle at build time, so changing
-the API location means rebuilding that image, not restarting it.
 
 ## Configuration
 

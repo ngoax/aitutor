@@ -2,7 +2,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes import (
     context,
@@ -58,6 +60,22 @@ async def lifespan(app: FastAPI):
     yield
 
 
+class _SpaFiles(StaticFiles):
+    """Static files that fall back to index.html.
+
+    The React router owns paths the server knows nothing about, so a deep link
+    or a refresh must return the app rather than a 404.
+    """
+
+    async def get_response(self, path: str, scope):
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code != 404:
+                raise
+            return await super().get_response("index.html", scope)
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title="AITutor — OATutor content authoring", lifespan=lifespan)
 
@@ -83,6 +101,11 @@ def create_app() -> FastAPI:
     app.include_router(drafts.step_router, prefix="/api")
     app.include_router(runs.router, prefix="/api")
     app.include_router(export.router, prefix="/api")
+
+    # Mounted last so it never shadows /api. Absent in local dev, where Vite
+    # serves the frontend on its own port.
+    if settings.static_dir is not None and settings.static_dir.is_dir():
+        app.mount("/", _SpaFiles(directory=settings.static_dir, html=True), name="frontend")
     return app
 
 

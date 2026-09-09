@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     # Point at <checkout>/src/content-sources/oatutor to merge into OATutor.
     oatutor_content_dir: Path | None = None
 
+    static_dir: Path | None = None
+
     @property
     def uploads_dir(self) -> Path:
         return self.data_dir / "uploads"
