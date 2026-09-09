@@ -15,6 +15,9 @@ dependencies = [
     "langchain-huggingface>=1.2.2",
     "langchain-chroma>=1.1.0",
     "sentence-transformers>=5.7.0",
+    # Only ever used through sentence-transformers, but named here so the
+    # CPU index below applies: uv sources bind to direct dependencies only.
+    "torch>=2.13",
     "langchain-openai>=1.5.0",
     "langchain-anthropic>=1.5.6",
     "langchain-ollama>=1.1.0",
@@ -49,6 +52,9 @@ markers = [
 [tool.uv]
 package = false
 
+# On Linux the PyPI torch wheel pulls in the CUDA runtime (nvidia-*, triton):
+# several GB the container never uses, since embedding runs on CPU. macOS
+# wheels are CPU-only already, so the marker leaves local dev untouched.
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
