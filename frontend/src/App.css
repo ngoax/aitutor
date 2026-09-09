@@ -1308,3 +1308,47 @@ textarea.text-input {
 .doc-main .progress-label {
   font-size: 0.72rem;
 }
+
+/* ---------- context parts ---------- */
+
+.parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.4rem;
+}
+.part {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 550;
+  cursor: pointer;
+}
+.part:focus {
+  outline: none;
+}
+.part:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.part.is-done::before {
+  content: "✓ ";
+  color: var(--ok);
+}
+.part.is-current {
+  border-color: var(--accent);
+  background: var(--accent-weak);
+  color: var(--accent);
+}
+.part-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--gap);
+  margin-top: 1.5rem;
+}

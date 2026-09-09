@@ -69,6 +69,16 @@ const SCOPES = [
   { value: "full", label: "Full learning unit", description: "A large set of tasks." },
 ];
 
+const PARTS = ["Where it fits", "The learning goal", "What it is for", "More detail", "Summary"];
+
+function partIsDone(part: number, context: TutorContext): boolean {
+  if (part === 0) return context.curricular_placement.length > 0 && !!context.prior_knowledge;
+  if (part === 1) return !!context.learning_goal;
+  if (part === 2) return context.tutor_roles.length > 0;
+  if (part === 3) return true;
+  return context.confirmed_at !== null;
+}
+
 function Critique({ critique }: { critique: GoalCritique }) {
 
   const flags = [
@@ -108,7 +118,7 @@ function Critique({ critique }: { critique: GoalCritique }) {
 export function ContextStep({ projectId, onSummary }: Props) {
   const [context, setContext] = useState<TutorContext | null>(null);
   const [summary, setSummary] = useState<ContextSummary | null>(null);
-  const [deeper, setDeeper] = useState(false);
+  const [part, setPart] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -178,89 +188,109 @@ export function ContextStep({ projectId, onSummary }: Props) {
 
       {error && <p className="error">{error}</p>}
 
-      <CheckboxGroup
-        label="Where will this tutor be used in your teaching sequence?"
-        options={PLACEMENTS}
-        selected={context.curricular_placement}
-        onChange={(curricular_placement) => save({ curricular_placement })}
-      />
-
-      <TextArea
-        label="What can learners already do that the tutor can build on?"
-        value={context.prior_knowledge}
-        placeholder="Expanding brackets; factoring out a common factor"
-        onSave={(prior_knowledge) => save({ prior_knowledge })}
-      />
-
-      <TextArea
-        label="What difficulties or misconceptions do you expect?"
-        value={context.known_difficulties}
-        placeholder="Sign errors when the constant term is negative"
-        onSave={(known_difficulties) => save({ known_difficulties })}
-      />
-
-      <div className="divider" />
-
-      <h3>The learning goal</h3>
-      <Select
-        label="What kind of knowledge should learners acquire?"
-        value={context.knowledge_type}
-        options={KNOWLEDGE_TYPES}
-        onChange={(knowledge_type) => save({ knowledge_type: knowledge_type as never })}
-      />
-      <TextArea
-        label="Describe the learning goal in one sentence"
-        hint="This is also the query used to search your materials, so name the concept the way you would look it up."
-        rows={2}
-        value={context.learning_goal}
-        placeholder="Learners can factor a quadratic with a non-unit leading coefficient"
-        onSave={(learning_goal) => save({ learning_goal })}
-      />
-      {summary?.critique_enabled && (
-        <>
+      <nav className="parts" aria-label="Context sections">
+        {PARTS.map((label, index) => (
           <button
-            className="btn btn-ghost"
-            disabled={busy || !context.learning_goal}
-            onClick={() => run(() => api.critiqueGoal(projectId))}
+            key={label}
+            type="button"
+            className={`part ${index === part ? "is-current" : ""} ${
+              partIsDone(index, context) ? "is-done" : ""
+            }`}
+            onClick={() => setPart(index)}
           >
-            {busy ? "Reading…" : critique ? "Ask again" : "Ask for a second opinion"}
+            {label}
           </button>
-          {critique && <Critique critique={critique as GoalCritique} />}
+        ))}
+      </nav>
+
+      {part === 0 && (
+        <>
+          <h3>Where it fits</h3>
+          <CheckboxGroup
+            label="Where will this tutor be used in your teaching sequence?"
+            options={PLACEMENTS}
+            selected={context.curricular_placement}
+            onChange={(curricular_placement) => save({ curricular_placement })}
+          />
+          <TextArea
+            label="What can learners already do that the tutor can build on?"
+            value={context.prior_knowledge}
+            placeholder="Expanding brackets; factoring out a common factor"
+            onSave={(prior_knowledge) => save({ prior_knowledge })}
+          />
+          <TextArea
+            label="What difficulties or misconceptions do you expect?"
+            value={context.known_difficulties}
+            placeholder="Sign errors when the constant term is negative"
+            onSave={(known_difficulties) => save({ known_difficulties })}
+          />
         </>
       )}
 
-      <div className="divider" />
+      {part === 1 && (
+        <>
+          <h3>The learning goal</h3>
+          <Select
+            label="What kind of knowledge should learners acquire?"
+            value={context.knowledge_type}
+            options={KNOWLEDGE_TYPES}
+            onChange={(knowledge_type) => save({ knowledge_type: knowledge_type as never })}
+          />
+          <TextArea
+            label="Describe the learning goal in one sentence"
+            hint="This is also the query used to search your materials, so name the concept the way you would look it up."
+            rows={2}
+            value={context.learning_goal}
+            placeholder="Learners can factor a quadratic with a non-unit leading coefficient"
+            onSave={(learning_goal) => save({ learning_goal })}
+          />
+          {summary?.critique_enabled && (
+            <>
+              <button
+                className="btn btn-ghost"
+                disabled={busy || !context.learning_goal}
+                onClick={() => run(() => api.critiqueGoal(projectId))}
+              >
+                {busy ? "Reading…" : critique ? "Ask again" : "Ask for a second opinion"}
+              </button>
+              {critique && <Critique critique={critique as GoalCritique} />}
+            </>
+          )}
+        </>
+      )}
 
-      <h3>What the tutor is for</h3>
-      <CheckboxGroup
-        label="What role should it play?"
-        options={ROLES}
-        selected={context.tutor_roles}
-        onChange={(tutor_roles) => save({ tutor_roles })}
-      />
-      <div className="grid-2">
-        <Select
-          label="What kind of feedback should it give?"
-          value={context.feedback_mode}
-          options={FEEDBACK_MODES}
-          onChange={(feedback_mode) => save({ feedback_mode: feedback_mode as never })}
-        />
-        <Select
-          label="How much of the unit does it cover?"
-          value={context.scope}
-          options={SCOPES}
-          onChange={(scope) => save({ scope: scope as never })}
-        />
-      </div>
+      {part === 2 && (
+        <>
+          <h3>What the tutor is for</h3>
+          <CheckboxGroup
+            label="What role should it play?"
+            options={ROLES}
+            selected={context.tutor_roles}
+            onChange={(tutor_roles) => save({ tutor_roles })}
+          />
+          <div className="grid-2">
+            <Select
+              label="What kind of feedback should it give?"
+              value={context.feedback_mode}
+              options={FEEDBACK_MODES}
+              onChange={(feedback_mode) => save({ feedback_mode: feedback_mode as never })}
+            />
+            <Select
+              label="How much of the unit does it cover?"
+              value={context.scope}
+              options={SCOPES}
+              onChange={(scope) => save({ scope: scope as never })}
+            />
+          </div>
+        </>
+      )}
 
-      <div className="divider" />
-
-      <button className="btn btn-ghost" onClick={() => setDeeper(!deeper)}>
-        {deeper ? "Hide" : "Add"} more detail (optional)
-      </button>
-
-      {deeper && (
-        <div className="deeper">
+      {part === 3 && (
+        <>
+          <h3>More detail</h3>
+          <p className="lede">
+            All optional. Skip to the summary if none of it would change the tasks.
+          </p>
           <TextArea
             label="How has the topic been taught so far?"
             value={context.instructional_history}
@@ -322,14 +352,12 @@ export function ContextStep({ projectId, onSummary }: Props) {
               onChange={(group_work) => save({ group_work })}
             />
           </div>
-        </div>
+        </>
       )}
 
-      <div className="divider" />
-
-      <h3>Your context summary</h3>
-      {summary && (
+      {part === 4 && summary && (
         <>
+          <h3>Your context summary</h3>
           <dl className="summary-list">
             {summary.sections.map((section) => (
               <div key={section.heading}>
@@ -347,7 +375,7 @@ export function ContextStep({ projectId, onSummary }: Props) {
 
           {context.confirmed_at ? (
             <p className="confirmed-note">
-              ✓ Confirmed. Editing anything above will ask you to confirm again.
+              ✓ Confirmed. Editing any part will ask you to confirm again.
             </p>
           ) : (
             <button
@@ -360,6 +388,24 @@ export function ContextStep({ projectId, onSummary }: Props) {
           )}
         </>
       )}
+
+      {/* Named for the parts, so they cannot be mistaken for the wizard's own
+          Back and Continue in the panel footer below. */}
+      <div className="part-nav">
+        <button
+          type="button"
+          className="btn btn-ghost"
+          disabled={part === 0}
+          onClick={() => setPart(part - 1)}
+        >
+          Previous part
+        </button>
+        {part < PARTS.length - 1 && (
+          <button type="button" className="btn" onClick={() => setPart(part + 1)}>
+            Next part
+          </button>
+        )}
+      </div>
     </div>
   );
 }
